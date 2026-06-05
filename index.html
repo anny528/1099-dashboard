@@ -55,7 +55,7 @@ tr:hover td { background:#f7f8fa; }
   <div class="kpi-card">
     <div class="label">累计人数（去重）</div>
     <div class="value" id="kpi-persons">-</div>
-    <div class="sub">1-4月不重复司机数</div>
+    <div class="sub">每月去重后合计</div>
   </div>
   <div class="kpi-card">
     <div class="label">累计人力成本（本币）</div>
@@ -79,6 +79,35 @@ tr:hover td { background:#f7f8fa; }
   </div>
 </div>
 
+<!-- 4月总数据 & 环比差异率 -->
+<div class="kpi-row" style="margin-bottom:20px;">
+  <div class="kpi-card" style="border-left:4px solid #2563eb;">
+    <div class="label">4月人数</div>
+    <div class="value" style="font-size:22px;">289</div>
+    <div class="sub" style="color:#10b981;font-weight:600;">环比 +9.47%</div>
+  </div>
+  <div class="kpi-card" style="border-left:4px solid #dc2626;">
+    <div class="label">4月人力成本</div>
+    <div class="value" style="font-size:22px;">¥1,173.37万</div>
+    <div class="sub" style="color:#10b981;font-weight:600;">环比 +8.85%</div>
+  </div>
+  <div class="kpi-card" style="border-left:4px solid #f59e0b;">
+    <div class="label">4月总工时</div>
+    <div class="value" style="font-size:22px;">65,090h</div>
+    <div class="sub" style="color:#10b981;font-weight:600;">环比 +6.84%</div>
+  </div>
+  <div class="kpi-card" style="border-left:4px solid #7c3aed;">
+    <div class="label">4月人均月成本</div>
+    <div class="value" style="font-size:22px;">¥4.06万</div>
+    <div class="sub" style="color:#dc2626;font-weight:600;">环比 -0.57%</div>
+  </div>
+  <div class="kpi-card" style="border-left:4px solid #06b6d4;">
+    <div class="label">4月人均月工时</div>
+    <div class="value" style="font-size:22px;">225.2h</div>
+    <div class="sub" style="color:#dc2626;font-weight:600;">环比 -2.40%</div>
+  </div>
+</div>
+
 <!-- 1. 月度成本、工时与人数趋势 -->
 <div class="chart-card full">
   <h3>月度成本、工时与人数趋势</h3>
@@ -91,22 +120,22 @@ tr:hover td { background:#f7f8fa; }
   <canvas id="chartGrouped" style="max-height:380px;"></canvas>
 </div>
 
-<!-- 3. 各区月度人数趋势 -->
-<div class="chart-card full">
-  <h3>各区月度人数趋势</h3>
-  <canvas id="chartRegionPersons" style="max-height:350px;"></canvas>
+<!-- 3. 各区月度人数趋势 + 4月各区人均 -->
+<div class="chart-grid" style="margin-bottom:20px;">
+  <div class="chart-card">
+    <h3>各区月度人数趋势</h3>
+    <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>4月各区人均月成本 & 人均月工时</h3>
+    <canvas id="chartAprilPerCapita" style="max-height:260px;"></canvas>
+  </div>
 </div>
 
 <!-- 4. 各区成本与人数占比 -->
 <div class="chart-card" style="margin-bottom:20px; text-align:center;">
   <h3>各区成本与人数占比（1-4月累计）</h3>
   <canvas id="chartPie" style="max-height:550px;"></canvas>
-</div>
-
-<!-- 5. 各区人均月成本 & 人均月工时对比 -->
-<div class="chart-card">
-  <h3>各区人均月成本 & 人均月工时对比</h3>
-  <canvas id="chartBar" style="max-height:380px;"></canvas>
 </div>
 
 <!-- Detailed Table -->
@@ -145,7 +174,7 @@ const FMTN = n => n.toLocaleString('en-US');
 const FMTH = n => FMTN(Math.round(n));
 
 // ===== KPI Cards =====
-document.getElementById('kpi-persons').textContent = FMTN(DATA.total.unique_persons);
+document.getElementById('kpi-persons').textContent = FMTN(DATA.monthly.person_count.reduce((a,b)=>a+b,0));
 document.getElementById('kpi-cost').textContent = FMTW(DATA.total.cost_local);
 document.getElementById('kpi-hours').textContent = FMTH(DATA.total.hours);
 document.getElementById('kpi-avgcost').textContent = '¥' + W(DATA.total.avg_cost_per_person) + '万';
@@ -388,9 +417,127 @@ new Chart(document.getElementById('chartRegionPersons'), {
       }
     },
     scales: {
-      y: { title: { display: true, text: '人数', font:{size:12,weight:'bold'} }, beginAtZero: false, min: 0, ticks: { font: {size:10} } }
+      y: { title: { display: false }, beginAtZero: false, min: 0, ticks: { font: {size:10} } }
     }
-  }
+  },
+  plugins: [ChartDataLabels, {
+    id: 'yUnitLabel',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const ca = chart.chartArea;
+      ctx.save();
+      ctx.font = '11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#666';
+      ctx.textBaseline = 'top';
+      ctx.textAlign = 'left';
+      // 靠左1cm (≈38px) from left axis bottom
+      ctx.fillText('人数', ca.left + 38, ca.bottom + 8);
+      ctx.restore();
+    }
+  }]
+});
+
+// ===== 3b. 4月各区人均月成本 & 人均月工时 =====
+// 计算各区4月人均数据
+const aprilDetailRows = DATA.detail_rows.filter(r => r.month === '2026-04');
+const aprilRegions = aprilDetailRows.map(r => r.region);
+const aprilPerCapitaCost = aprilDetailRows.map(r => r.avg_cost / 10000); // CNY万元
+const aprilPerCapitaHours = aprilDetailRows.map(r => r.avg_hours); // 小时
+const aprilRegionColors = aprilRegions.map(r => REGION_COLORS[r] || '#999');
+
+new Chart(document.getElementById('chartAprilPerCapita'), {
+  type: 'bar',
+  data: {
+    labels: aprilRegions,
+    datasets: [
+      {
+        label: '人均月成本 (CNY万元)',
+        data: aprilPerCapitaCost,
+        backgroundColor: aprilRegionColors.map(c => c + 'aa'),
+        borderColor: aprilRegionColors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        yAxisID: 'y',
+        order: 2
+      },
+      {
+        label: '人均月工时 (h)',
+        data: aprilPerCapitaHours,
+        type: 'line',
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220,38,38,0.06)',
+        borderWidth: 3,
+        fill: false,
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: '#dc2626',
+        pointBorderWidth: 2,
+        yAxisID: 'y1',
+        order: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    layout: { padding: { bottom: 30 } },
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font:{size:10} } },
+      datalabels: {
+        formatter: function(v, ctx) {
+          return ctx.datasetIndex === 0 ? v.toFixed(2) + '万' : v.toFixed(0) + 'h';
+        },
+        font: { size: 9, weight: 'bold' },
+        color: function(ctx) { return ctx.datasetIndex === 0 ? '#333' : '#dc2626'; },
+        anchor: function(ctx) {
+          if (ctx.datasetIndex === 0) return 'end';
+          return 'center';
+        },
+        align: function(ctx) {
+          if (ctx.datasetIndex === 0) return 'end';
+          return 'bottom';
+        },
+        offset: function(ctx) {
+          return ctx.datasetIndex === 0 ? 6 : 8;
+        },
+        display: true
+      }
+    },
+    scales: {
+      x: {
+        ticks: { font: { size: 9 }, maxRotation: 25, minRotation: 0 }
+      },
+      y: {
+        position: 'left',
+        ticks: { callback: v => v.toFixed(1) + '万', font:{size:9} },
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        title: { display: false }
+      },
+      y1: {
+        position: 'right',
+        ticks: { font:{size:9} },
+        grid: { drawOnChartArea: false },
+        title: { display: false }
+      }
+    }
+  },
+  plugins: [ChartDataLabels, {
+    id: 'yUnitLabelApril',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const ca = chart.chartArea;
+      ctx.save();
+      ctx.font = '11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#666';
+      ctx.textBaseline = 'top';
+      // 左侧单位：纵轴左下角，靠左横排（再偏左0.5cm）
+      ctx.textAlign = 'left';
+      ctx.fillText('CNY万元', ca.left - 19, ca.bottom + 16);
+      // 右侧单位：纵轴右下角，靠右横排
+      ctx.textAlign = 'right';
+      ctx.fillText('小时', ca.right, ca.bottom + 16);
+      ctx.restore();
+    }
+  }]
 });
 
 // ===== 4. 各区成本与人数占比（环形图） =====
@@ -436,95 +583,6 @@ new Chart(document.getElementById('chartPie'), {
       }
     }
   }
-});
-
-// ===== Bottom label plugin =====
-const bottomLabelPlugin = {
-  id: 'bottomLabel',
-  afterDraw(chart) {
-    const ctx = chart.ctx;
-    const ca = chart.chartArea;
-    ctx.save();
-    ctx.font = 'bold 12px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';
-    ctx.fillStyle = '#666';
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'left';
-    ctx.fillText('CNY 万元', ca.left - 38, ca.bottom + 6);
-    ctx.textAlign = 'right';
-    ctx.fillText('小时', ca.right + 38, ca.bottom + 6);
-    ctx.restore();
-  }
-};
-
-// ===== 5. 各区人均月成本 & 人均月工时对比 =====
-new Chart(document.getElementById('chartBar'), {
-  type: 'bar',
-  data: {
-    labels: pieLabels,
-    datasets: [
-      {
-        label: '人均月成本 (CNY万元)',
-        data: DATA.region_stats.avg_cost_per_person.map(v => v / 10000),
-        backgroundColor: 'rgba(37,99,235,0.6)',
-        borderColor: '#2563eb',
-        borderWidth: 1,
-        borderRadius: 6,
-        yAxisID: 'y'
-      },
-      {
-        label: '人均月工时 (h)',
-        data: DATA.region_stats.avg_hours_per_person,
-        type: 'line',
-        borderColor: '#dc2626',
-        backgroundColor: 'rgba(220,38,38,0.06)',
-        borderWidth: 3,
-        fill: false,
-        tension: 0.35,
-        pointRadius: 5,
-        pointBackgroundColor: '#dc2626',
-        yAxisID: 'y1'
-      }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: true,
-    layout: { padding: { bottom: 22 } },
-    plugins: {
-      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font:{size:11} } },
-      datalabels: {
-        formatter: function(v, ctx) {
-          return ctx.datasetIndex === 0 ? v.toFixed(1) + '万' : v.toFixed(0) + 'h';
-        },
-        font: { size: 10, weight: 'bold' },
-        color: function(ctx) { return ctx.datasetIndex === 0 ? '#2563eb' : '#dc2626'; },
-        anchor: function(ctx) {
-          if (ctx.datasetIndex === 0) return 'end';
-          return 'center';
-        },
-        align: function(ctx) {
-          if (ctx.datasetIndex === 0) return 'end';
-          return 'bottom';
-        },
-        offset: function(ctx) {
-          return ctx.datasetIndex === 0 ? 6 : 8;
-        },
-        display: true
-      }
-    },
-    scales: {
-      y: {
-        position: 'left',
-        ticks: { callback: v => v.toFixed(1) + '万', font:{size:10} },
-        grid: { color: 'rgba(0,0,0,0.04)' }
-      },
-      y1: {
-        position: 'right',
-        ticks: { font: {size:10} },
-        grid: { drawOnChartArea: false }
-      }
-    }
-  },
-  plugins: [ChartDataLabels, bottomLabelPlugin]
 });
 
 // ===== Detail Table =====
