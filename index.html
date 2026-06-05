@@ -100,14 +100,14 @@ tr:hover td { background:#f7f8fa; }
 </div>
 
 <!-- 2. 各区月度成本分布（分组柱状） -->
-<div class="chart-card full">
+<div class="chart-card full" id="sectionGrouped">
   <h3>各区月度成本分布（分组柱状）</h3>
   <canvas id="chartGrouped" style="max-height:380px;"></canvas>
 </div>
 
 <!-- 3. 各区月度人数趋势 + 4月各区人均 -->
 <div class="chart-grid" style="margin-bottom:20px;">
-  <div class="chart-card">
+  <div class="chart-card" id="sectionRegionPersons">
     <h3>各区月度人数趋势</h3>
     <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
   </div>
@@ -117,7 +117,13 @@ tr:hover td { background:#f7f8fa; }
   </div>
 </div>
 
-<!-- 4. 各区成本与人数占比 -->
+<!-- 4. 各区月均成本 -->
+<div class="chart-card full" id="sectionAvgCost">
+  <h3>各区月均成本</h3>
+  <canvas id="chartAvgCost" style="max-height:500px;min-height:320px;"></canvas>
+</div>
+
+<!-- 5. 各区成本与人数占比 -->
 <div class="chart-card" id="sectionPie" style="margin-bottom:20px; text-align:center;">
   <h3>各区成本与人数占比（1-4月累计）</h3>
   <canvas id="chartPie" style="max-height:550px;"></canvas>
@@ -130,7 +136,7 @@ tr:hover td { background:#f7f8fa; }
     <thead>
       <tr>
         <th>月份</th><th>区域</th><th>人数</th><th>总工时(h)</th>
-        <th>人均工时(h)</th><th>本币成本(CNY万元)</th><th>人均成本(CNY万元)</th><th>原币成本(USD万元)</th>
+        <th>人均工时(h)</th><th>原币月总成本</th><th>本币月总成本（CNY）</th><th>人均成本(CNY万元)</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -140,7 +146,7 @@ tr:hover td { background:#f7f8fa; }
 <div class="footer">数据更新时间：2026-06-05 | 1099司机实发人力成本 | 按人数去重统计</div>
 
 <script>
-const DATA = {"total":{"unique_persons":352,"person_months":1031,"cost_local":41320408.43,"cost_orig":5939921.57,"hours":231644.92,"avg_cost_per_person":40077.99,"avg_hours_per_person":224.68},"months":["2026-01","2026-02","2026-03","2026-04"],"months_short":["1月","2月","3月","4月"],"monthly":{"person_count":[245,233,264,289],"hours":[54696.61,50935.73,60922.1,65090.48],"cost":[9721495.93,9085543.36,10779701.65,11733667.49],"avg_cost_per_person":[39679.58,38993.75,40832.2,40600.93],"avg_hours_per_person":[223.25,218.61,230.77,225.23]},"regions":["NE 东北大区","WE 美西大区","TX 德州大区","MS 中南大区","GL 大湖大区","Ground项目部"],"region_stats":{"person_count":[160,101,38,22,16,15],"hours":[109637.84,74882.11,17190.33,13425.76,10624.33,5884.55],"cost":[19722545.22,12637373.1,3729583.64,2337996.45,1854033.18,1038876.84],"avg_cost_per_person":[123265.91,125122.51,98146.94,106272.57,115877.07,69258.46],"avg_hours_per_person":[685.24,741.41,452.38,610.26,664.02,392.3]},"monthly_region_cost":[{"month":"2026-01","GL 大湖大区":423042.38,"Ground项目部":391009.89,"MS 中南大区":489930.71,"NE 东北大区":4568629.21,"TX 德州大区":762196.68,"WE 美西大区":3086687.06},{"month":"2026-02","GL 大湖大区":378308.00,"Ground项目部":209549.61,"MS 中南大区":459208.96,"NE 东北大区":4341600.92,"TX 德州大区":865606.85,"WE 美西大区":2831269.02},{"month":"2026-03","GL 大湖大区":472580.17,"Ground项目部":223976.81,"MS 中南大区":583403.14,"NE 东北大区":5245360.07,"TX 德州大区":966423.65,"WE 美西大区":3287957.81},{"month":"2026-04","GL 大湖大区":580102.63,"Ground项目部":214340.53,"MS 中南大区":805453.64,"NE 东北大区":5566955.02,"TX 德州大区":1135356.46,"WE 美西大区":3431459.21}],"monthly_region_persons":[{"month":"2026-01","GL 大湖大区":9,"Ground项目部":11,"MS 中南大区":12,"NE 东北大区":112,"TX 德州大区":29,"WE 美西大区":72},{"month":"2026-02","GL 大湖大区":10,"Ground项目部":10,"MS 中南大区":12,"NE 东北大区":104,"TX 德州大区":28,"WE 美西大区":69},{"month":"2026-03","GL 大湖大区":12,"Ground项目部":9,"MS 中南大区":19,"NE 东北大区":119,"TX 德州大区":30,"WE 美西大区":75},{"month":"2026-04","GL 大湖大区":16,"Ground项目部":8,"MS 中南大区":20,"NE 东北大区":122,"TX 德州大区":32,"WE 美西大区":91}],"detail_rows":[{"month":"2026-01","region":"GL 大湖大区","person_count":9,"hours":2453.48,"avg_hours":272.61,"cost":423042.38,"avg_cost":47004.71,"orig_cost":60187.00},{"month":"2026-01","region":"Ground项目部","person_count":11,"hours":2220.14,"avg_hours":201.83,"cost":391009.89,"avg_cost":35546.35,"orig_cost":55629.68},{"month":"2026-01","region":"MS 中南大区","person_count":12,"hours":2893.89,"avg_hours":241.16,"cost":489930.71,"avg_cost":40827.56,"orig_cost":69703.32},{"month":"2026-01","region":"NE 东北大区","person_count":112,"hours":25125.75,"avg_hours":224.34,"cost":4568629.21,"avg_cost":40791.33,"orig_cost":649987.08},{"month":"2026-01","region":"TX 德州大区","person_count":29,"hours":3887.17,"avg_hours":134.04,"cost":762196.68,"avg_cost":26282.64,"orig_cost":108439.09},{"month":"2026-01","region":"WE 美西大区","person_count":72,"hours":18116.18,"avg_hours":251.61,"cost":3086687.06,"avg_cost":42870.65,"orig_cost":439148.51},{"month":"2026-02","region":"GL 大湖大区","person_count":10,"hours":2171.75,"avg_hours":217.18,"cost":378308.00,"avg_cost":37830.80,"orig_cost":54293.75},{"month":"2026-02","region":"Ground项目部","person_count":10,"hours":1142.68,"avg_hours":114.27,"cost":209549.61,"avg_cost":20954.96,"orig_cost":30074.00},{"month":"2026-02","region":"MS 中南大区","person_count":12,"hours":2752.59,"avg_hours":229.38,"cost":459208.96,"avg_cost":38267.41,"orig_cost":65904.44},{"month":"2026-02","region":"NE 东北大区","person_count":104,"hours":24028.12,"avg_hours":231.04,"cost":4341600.92,"avg_cost":41746.16,"orig_cost":623094.94},{"month":"2026-02","region":"TX 德州大区","person_count":28,"hours":4024.00,"avg_hours":143.71,"cost":865606.85,"avg_cost":30914.53,"orig_cost":124229.58},{"month":"2026-02","region":"WE 美西大区","person_count":69,"hours":16816.59,"avg_hours":243.72,"cost":2831269.02,"avg_cost":41032.88,"orig_cost":406336.15},{"month":"2026-03","region":"GL 大湖大区","person_count":12,"hours":2687.87,"avg_hours":223.99,"cost":472580.17,"avg_cost":39381.68,"orig_cost":68264.31},{"month":"2026-03","region":"Ground项目部","person_count":9,"hours":1282.66,"avg_hours":142.52,"cost":223976.81,"avg_cost":24886.31,"orig_cost":32353.50},{"month":"2026-03","region":"MS 中南大区","person_count":19,"hours":3432.95,"avg_hours":180.68,"cost":583403.14,"avg_cost":30705.43,"orig_cost":84272.71},{"month":"2026-03","region":"NE 东北大区","person_count":119,"hours":29255.22,"avg_hours":245.84,"cost":5245360.07,"avg_cost":44078.66,"orig_cost":757693.43},{"month":"2026-03","region":"TX 德州大区","person_count":30,"hours":4518.17,"avg_hours":150.61,"cost":966423.65,"avg_cost":32214.12,"orig_cost":139600.11},{"month":"2026-03","region":"WE 美西大区","person_count":75,"hours":19745.23,"avg_hours":263.27,"cost":3287957.81,"avg_cost":43839.44,"orig_cost":474946.24},{"month":"2026-04","region":"GL 大湖大区","person_count":16,"hours":3311.23,"avg_hours":206.95,"cost":580102.63,"avg_cost":36256.41,"orig_cost":83837.13},{"month":"2026-04","region":"Ground项目部","person_count":8,"hours":1239.07,"avg_hours":154.88,"cost":214340.53,"avg_cost":26792.57,"orig_cost":30976.75},{"month":"2026-04","region":"MS 中南大区","person_count":20,"hours":4346.33,"avg_hours":217.32,"cost":805453.64,"avg_cost":40272.68,"orig_cost":116405.13},{"month":"2026-04","region":"NE 东北大区","person_count":122,"hours":31228.75,"avg_hours":255.97,"cost":5566955.02,"avg_cost":45630.78,"orig_cost":804543.03},{"month":"2026-04","region":"TX 德州大区","person_count":32,"hours":4760.99,"avg_hours":148.78,"cost":1135356.46,"avg_cost":35479.89,"orig_cost":164083.08},{"month":"2026-04","region":"WE 美西大区","person_count":91,"hours":20204.11,"avg_hours":222.02,"cost":3431459.21,"avg_cost":37708.34,"orig_cost":495918.61}]};
+const DATA = {"total":{"unique_persons":352,"person_months":1031,"cost_local":41320408.49,"cost_orig":5939921.57,"hours":231644.92,"avg_cost_per_person":40077.99,"avg_hours_per_person":224.68},"months":["2026-01","2026-02","2026-03","2026-04"],"months_short":["1月","2月","3月","4月"],"monthly":{"person_count":[245,233,264,289],"hours":[54696.61,50935.73,60922.1,65090.48],"cost":[9721495.9,9085543.39,10779701.65,11733667.55],"avg_cost_per_person":[39679.58,38993.75,40832.2,40600.93],"avg_hours_per_person":[223.25,218.61,230.77,225.23]},"regions":["GL 大湖大区","Ground项目部","MS 中南大区","NE 东北大区","TX 德州大区","WE 美西大区"],"region_stats":{"person_count":[47,38,63,457,119,307],"hours":[10624.33,5884.55,13425.76,109637.84,17190.33,74882.11],"cost":[1854033.19,1038876.84,2337996.44,19722545.23,3729583.65,12637373.14],"avg_cost_per_person":[39447.51,27338.86,37111.05,43156.55,31341.04,41164.08],"avg_hours_per_person":[226.05,154.86,213.11,239.91,144.46,243.92]},"monthly_region_cost":[{"month":"2026-01","GL 大湖大区":423042.39,"Ground项目部":391009.89,"MS 中南大区":489930.7,"NE 东北大区":4568629.19,"TX 德州大区":762196.68,"WE 美西大区":3086687.05},{"month":"2026-02","GL 大湖大区":378307.99,"Ground项目部":209549.62,"MS 中南大区":459208.96,"NE 东北大区":4341600.92,"TX 德州大区":865606.87,"WE 美西大区":2831269.03},{"month":"2026-03","GL 大湖大区":472580.17,"Ground项目部":223976.81,"MS 中南大区":583403.12,"NE 东北大区":5245360.08,"TX 德州大区":966423.64,"WE 美西大区":3287957.83},{"month":"2026-04","GL 大湖大区":580102.64,"Ground项目部":214340.52,"MS 中南大区":805453.66,"NE 东北大区":5566955.04,"TX 德州大区":1135356.46,"WE 美西大区":3431459.23}],"monthly_region_persons":[{"month":"2026-01","GL 大湖大区":9,"Ground项目部":11,"MS 中南大区":12,"NE 东北大区":112,"TX 德州大区":29,"WE 美西大区":72},{"month":"2026-02","GL 大湖大区":10,"Ground项目部":10,"MS 中南大区":12,"NE 东北大区":104,"TX 德州大区":28,"WE 美西大区":69},{"month":"2026-03","GL 大湖大区":12,"Ground项目部":9,"MS 中南大区":19,"NE 东北大区":119,"TX 德州大区":30,"WE 美西大区":75},{"month":"2026-04","GL 大湖大区":16,"Ground项目部":8,"MS 中南大区":20,"NE 东北大区":122,"TX 德州大区":32,"WE 美西大区":91}],"detail_rows":[{"month":"2026-01","region":"GL 大湖大区","person_count":9,"hours":2453.48,"avg_hours":272.61,"cost":423042.39,"avg_cost":47004.71,"orig_cost":60187.0},{"month":"2026-01","region":"Ground项目部","person_count":11,"hours":2220.14,"avg_hours":201.83,"cost":391009.89,"avg_cost":35546.35,"orig_cost":55629.68},{"month":"2026-01","region":"MS 中南大区","person_count":12,"hours":2893.89,"avg_hours":241.16,"cost":489930.7,"avg_cost":40827.56,"orig_cost":69703.32},{"month":"2026-01","region":"NE 东北大区","person_count":112,"hours":25125.75,"avg_hours":224.34,"cost":4568629.19,"avg_cost":40791.33,"orig_cost":649987.08},{"month":"2026-01","region":"TX 德州大区","person_count":29,"hours":3887.17,"avg_hours":134.04,"cost":762196.68,"avg_cost":26282.64,"orig_cost":108439.09},{"month":"2026-01","region":"WE 美西大区","person_count":72,"hours":18116.18,"avg_hours":251.61,"cost":3086687.05,"avg_cost":42870.65,"orig_cost":439148.51},{"month":"2026-02","region":"GL 大湖大区","person_count":10,"hours":2171.75,"avg_hours":217.18,"cost":378307.99,"avg_cost":37830.8,"orig_cost":54293.75},{"month":"2026-02","region":"Ground项目部","person_count":10,"hours":1142.68,"avg_hours":114.27,"cost":209549.62,"avg_cost":20954.96,"orig_cost":30074.0},{"month":"2026-02","region":"MS 中南大区","person_count":12,"hours":2752.59,"avg_hours":229.38,"cost":459208.96,"avg_cost":38267.41,"orig_cost":65904.44},{"month":"2026-02","region":"NE 东北大区","person_count":104,"hours":24028.12,"avg_hours":231.04,"cost":4341600.92,"avg_cost":41746.16,"orig_cost":623094.94},{"month":"2026-02","region":"TX 德州大区","person_count":28,"hours":4024.0,"avg_hours":143.71,"cost":865606.87,"avg_cost":30914.53,"orig_cost":124229.58},{"month":"2026-02","region":"WE 美西大区","person_count":69,"hours":16816.59,"avg_hours":243.72,"cost":2831269.03,"avg_cost":41032.88,"orig_cost":406336.15},{"month":"2026-03","region":"GL 大湖大区","person_count":12,"hours":2687.87,"avg_hours":223.99,"cost":472580.17,"avg_cost":39381.68,"orig_cost":68264.31},{"month":"2026-03","region":"Ground项目部","person_count":9,"hours":1282.66,"avg_hours":142.52,"cost":223976.81,"avg_cost":24886.31,"orig_cost":32353.5},{"month":"2026-03","region":"MS 中南大区","person_count":19,"hours":3432.95,"avg_hours":180.68,"cost":583403.12,"avg_cost":30705.43,"orig_cost":84272.71},{"month":"2026-03","region":"NE 东北大区","person_count":119,"hours":29255.22,"avg_hours":245.84,"cost":5245360.08,"avg_cost":44078.66,"orig_cost":757693.43},{"month":"2026-03","region":"TX 德州大区","person_count":30,"hours":4518.17,"avg_hours":150.61,"cost":966423.64,"avg_cost":32214.12,"orig_cost":139600.11},{"month":"2026-03","region":"WE 美西大区","person_count":75,"hours":19745.23,"avg_hours":263.27,"cost":3287957.83,"avg_cost":43839.44,"orig_cost":474946.24},{"month":"2026-04","region":"GL 大湖大区","person_count":16,"hours":3311.23,"avg_hours":206.95,"cost":580102.64,"avg_cost":36256.41,"orig_cost":83837.13},{"month":"2026-04","region":"Ground项目部","person_count":8,"hours":1239.07,"avg_hours":154.88,"cost":214340.52,"avg_cost":26792.57,"orig_cost":30976.75},{"month":"2026-04","region":"MS 中南大区","person_count":20,"hours":4346.33,"avg_hours":217.32,"cost":805453.66,"avg_cost":40272.68,"orig_cost":116405.13},{"month":"2026-04","region":"NE 东北大区","person_count":122,"hours":31228.75,"avg_hours":255.97,"cost":5566955.04,"avg_cost":45630.78,"orig_cost":804543.03},{"month":"2026-04","region":"TX 德州大区","person_count":32,"hours":4760.99,"avg_hours":148.78,"cost":1135356.46,"avg_cost":35479.89,"orig_cost":164083.08},{"month":"2026-04","region":"WE 美西大区","person_count":91,"hours":20204.11,"avg_hours":222.02,"cost":3431459.23,"avg_cost":37708.34,"orig_cost":495918.61}]};
 
 const REGION_COLORS = {
   'NE 东北大区': '#2563eb', 'WE 美西大区': '#f59e0b', 'TX 德州大区': '#10b981',
@@ -183,9 +189,11 @@ function renderAll() {
   Object.values(charts).forEach(c => c.destroy()); charts = {};
   const R = currentRegion;
   const regions = R ? [R] : DATA.regions;
-  // 仅"全部"时显示这两个板块
+  // 仅"全部"时显示这些板块
   document.getElementById('sectionAprilPC').style.display = R ? 'none' : '';
   document.getElementById('sectionPie').style.display = R ? 'none' : '';
+  document.getElementById('sectionGrouped').style.display = R ? 'none' : '';
+  document.getElementById('sectionRegionPersons').style.display = R ? 'none' : '';
   const months = DATA.months, months_short = DATA.months_short;
   const filtered = R ? DATA.detail_rows.filter(r => r.region === R) : DATA.detail_rows;
 
@@ -276,6 +284,67 @@ function renderAll() {
     plugins:[ChartDataLabels,{id:'yULA',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('CNY万元',ca.left-19,ca.bottom+16);ctx.textAlign='right';ctx.fillText('小时',ca.right,ca.bottom+16);ctx.restore();}}]
   });
 
+  // ===== 4b. 各区月均成本（横向条形图）=====
+  if (charts.avgCost) charts.avgCost.destroy();
+  const acColors = ['#2563eb','#f59e0b','#10b981','#8b5cf6'];
+  let acLabels, acDatasets, acTitle;
+  if (!R) {
+    // 全部：分组横向条形图，Y轴=区域，每个区域4根条形（1月/2月/3月/4月）
+    acTitle = '各区月均成本（按月）';
+    acLabels = DATA.regions;
+    acDatasets = DATA.months_short.map((m,i)=>({
+      label: m,
+      data: DATA.regions.map(r=>{
+        const row = DATA.detail_rows.find(d=>d.region===r&&d.month===DATA.months[i]);
+        return row ? Math.round(row.avg_cost/10000) : 0;
+      }),
+      backgroundColor: acColors[i]+'b3',
+      borderColor: acColors[i],
+      borderWidth:1,
+      borderRadius:3
+    }));
+  } else {
+    // 某区域：Y轴=月份，显示该区域4个月的月均成本
+    acTitle = R + ' - 月度成本';
+    acLabels = DATA.months_short;
+    acDatasets = [{
+      label: R,
+      data: DATA.months.map(m=>{
+        const row = DATA.detail_rows.find(d=>d.region===R&&d.month===m);
+        return row ? Math.round(row.avg_cost/10000) : 0;
+      }),
+      backgroundColor: '#2563ebb3',
+      borderColor: '#2563eb',
+      borderWidth:1,
+      borderRadius:4
+    }];
+  }
+  document.querySelector('#sectionAvgCost h3').textContent = acTitle;
+  charts.avgCost = new Chart(document.getElementById('chartAvgCost'), {
+    type:'bar',
+    data:{labels:acLabels, datasets:acDatasets},
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:true,
+      aspectRatio: !R ? 2.8 : 4,
+      layout:{padding:{bottom:8,left:8}},
+      plugins:{
+        legend:{display:!R,position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},
+        datalabels:{
+          anchor:'end',align:'end',offset:4,
+          formatter:v=>v>0?'¥'+v+'万':'',
+          font:{size:11,weight:'bold'},color:'#333'
+        }
+      },
+      scales:{
+        x:{ticks:{callback:v=>'¥'+v+'万',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},
+        y:{ticks:{font:{size:11}},grid:{display:false}}
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+
   // ===== 4. 环形图 =====
   const pLabels=regions, pData=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.cost[i]/10000:0;}), pColors=regions.map(r=>REGION_COLORS[r]), pPersons=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.person_count[i]:0;});
   charts.pie = new Chart(document.getElementById('chartPie'), {
@@ -289,7 +358,7 @@ function renderAll() {
   tbody.innerHTML = '';
   filtered.forEach(r => {
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td>'+r.month+'</td><td>'+r.region+'</td><td class="num">'+FMTN(r.person_count)+'</td><td class="num">'+FMTN(r.hours)+'</td><td class="num">'+r.avg_hours.toFixed(1)+'h</td><td class="num highlight">'+FMTW(r.cost)+'</td><td class="num">'+FMTW(r.avg_cost)+'</td><td class="num">'+FMTU(r.orig_cost)+'</td>';
+    tr.innerHTML = '<td>'+r.month+'</td><td>'+r.region+'</td><td class="num">'+FMTN(r.person_count)+'</td><td class="num">'+FMTN(r.hours)+'</td><td class="num">'+r.avg_hours.toFixed(1)+'h</td><td class="num">'+FMTU(r.orig_cost)+'</td><td class="num highlight">'+FMTW(r.cost)+'</td><td class="num">'+FMTW(r.avg_cost)+'</td>';
     tbody.appendChild(tr);
   });
 }
