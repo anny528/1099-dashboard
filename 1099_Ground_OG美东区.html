@@ -55,7 +55,7 @@ tr:hover td { background:#f7f8fa; }
 
 <div class="header">
   <h1>Ground项目部 - OG 美东区 - 1099司机薪酬看板</h1>
-  <p>2026年1月 - 4月 | 按人数统计（已去重） | 金额单位：万元</p>
+  <p>2026年1月 - 5月 | 按人数统计（已去重） | 金额单位：万元</p>
 </div>
 
 <!-- KPI Cards -->
@@ -87,7 +87,7 @@ tr:hover td { background:#f7f8fa; }
   </div>
 </div>
 
-<!-- 4月总数据 & 环比差异率 -->
+<!-- 5月总数据 & 环比差异率 -->
 <div class="kpi-row" id="aprKpiRow" style="margin-bottom:20px;"></div>
 
 <!-- 1. 月度成本、工时与人数趋势 -->
@@ -102,21 +102,21 @@ tr:hover td { background:#f7f8fa; }
   <canvas id="chartGrouped" style="max-height:380px;"></canvas>
 </div>
 
-<!-- 3. 各区月度人数趋势 + 4月各区人均 -->
+<!-- 3. 各区月度人数趋势 + 5月各区人均 -->
 <div class="chart-grid" style="margin-bottom:20px;">
   <div class="chart-card" id="sectionRegionPersons">
     <h3>各区月度人数趋势</h3>
     <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
   </div>
   <div class="chart-card" id="sectionAprilPC">
-    <h3>4月各区人均月成本 & 人均月工时</h3>
+    <h3>5月各区人均月成本 & 人均月工时</h3>
     <canvas id="chartAprilPerCapita" style="max-height:260px;"></canvas>
   </div>
 </div>
 
 <!-- 4. 各区成本与人数占比 -->
 <div class="chart-card" id="sectionPie" style="margin-bottom:20px; text-align:center;">
-  <h3>各区成本与人数占比（1-4月累计）</h3>
+  <h3>各区成本与人数占比（1-5月累计）</h3>
   <canvas id="chartPie" style="max-height:550px;"></canvas>
 </div>
 
@@ -200,11 +200,11 @@ function renderAll() {
   const aprP=mPersons[ai],marP=mPersons[mi],aprC=mCost[ai],marC=mCost[mi],aprH=mHours[ai],marH=mHours[mi];
   const aprAC=mAvgCost[ai],marAC=mAvgCost[mi],aprAH=mAvgHours[ai],marAH=mAvgHours[mi];
   document.getElementById('aprKpiRow').innerHTML = `
-    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">4月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">4月人力成本</div><div class="value" style="font-size:22px;">${FMTU(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">4月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">4月人均月成本</div><div class="value" style="font-size:22px;">$${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">4月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
+    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">5月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">5月人力成本</div><div class="value" style="font-size:22px;">${FMTU(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">5月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">5月人均月成本</div><div class="value" style="font-size:22px;">$${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">5月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
 
   Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif";
   Chart.defaults.font.size = 12;
