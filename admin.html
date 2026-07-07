@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人员权限管理 — 1099 薪酬看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#333}
+.header{background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:20px;font-weight:600}
+.user-info{font-size:13px;opacity:.9;display:flex;align-items:center;gap:8px}
+.logout-btn{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:4px;cursor:pointer;font-size:12px}
+.logout-btn:hover{background:rgba(255,255,255,.3)}
+.container{max-width:1100px;margin:20px auto;padding:0 16px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px;overflow:hidden}
+.card-header{padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.card-header h2{font-size:15px;font-weight:600}
+.card-body{padding:20px}
+.search-box{display:flex;gap:10px}
+.search-box input{flex:1;padding:8px 14px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,.1)}
+.search-box button{padding:8px 20px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;white-space:nowrap}
+.search-box button:hover{background:#1557b0}
+.search-box button:disabled{background:#a0c4f1;cursor:not-allowed}
+.search-results{margin-top:12px}
+.search-result-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid #f0f0f0;border-radius:6px;margin-bottom:6px;transition:background .15s}
+.search-result-item:hover{background:#f8faff}
+.search-result-item .info{flex:1}
+.search-result-item .name{font-weight:600;font-size:14px}
+.search-result-item .meta{font-size:12px;color:#888;margin-top:2px}
+.search-result-item .sub{font-size:11px;color:#aaa}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.tag-admin{background:#fff3e0;color:#e65100;border:1px solid #ffe0b2}
+.tag-region{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+.tag-remove{cursor:pointer;margin-left:2px;font-weight:bold;font-size:14px;opacity:.5;line-height:1}
+.tag-remove:hover{opacity:1}
+.section-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #fafafa}
+.section-row:last-child{border-bottom:none}
+.section-row .label{font-weight:600;font-size:14px}
+.section-row .value{color:#666;font-size:13px}
+.region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.region-card{border:1px solid #e8e8e8;border-radius:8px;padding:14px}
+.region-card h4{font-size:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.region-card h4 .count{font-size:11px;color:#888;font-weight:400}
+.empty-hint{color:#bbb;font-size:12px;text-align:center;padding:12px}
+.add-user-row{display:flex;gap:6px;margin-top:8px}
+.add-user-row select{flex:1;padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px}
+.add-user-row button{padding:5px 12px;font-size:12px;border-radius:4px;background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;cursor:pointer;white-space:nowrap}
+.add-user-row button:hover{background:#c8e6c9}
+.btn-row{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.btn{font-size:14px;padding:10px 28px;border-radius:6px;cursor:pointer;border:none;font-weight:500;transition:all .2s}
+.btn-primary{background:#1a73e8;color:#fff}
+.btn-primary:hover{background:#1557b0}
+.btn-danger{background:#fff;color:#d93025;border:1px solid #d93025}
+.btn-danger:hover{background:#fce8e6}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 24px;border-radius:6px;color:#fff;font-size:14px;animation:slideIn .3s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-success{background:#2e7d32}
+.toast-error{background:#d93025}
+.toast-info{background:#1a73e8}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.loading{text-align:center;padding:30px;color:#888}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.user-pool-hint{font-size:11px;color:#888;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👥 人员权限管理</h1>
+  <div class="user-info">
+    <span id="current-user-name">...</span>
+    <button class="logout-btn" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 当前用户信息 -->
+  <div class="card">
+    <div class="card-header"><h2>🔐 当前登录</h2></div>
+    <div class="card-body" id="me-info">加载中...</div>
+  </div>
+
+  <!-- 搜索用户 -->
+  <div class="card">
+    <div class="card-header"><h2>🔍 搜索飞书用户</h2></div>
+    <div class="card-body">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="输入姓名 / 邮箱 / 手机号搜索飞书用户..." onkeydown="if(event.key==='Enter')searchUsers()">
+        <button id="search-btn" onclick="searchUsers()">搜索</button>
+      </div>
+      <div id="search-results" class="search-results"></div>
+      <div id="user-pool" class="hidden">
+        <div class="user-pool-hint">💡 已搜索到的用户会暂存在此处，可用于分配权限</div>
+        <div id="user-pool-list" class="tag-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 超级管理员管理 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>👑 超级管理员</h2>
+      <span style="font-size:12px;color:#888">可查看全部看板 + 管理权限</span>
+    </div>
+    <div class="card-body">
+      <div id="admin-list" class="tag-list"></div>
+      <div class="add-user-row" style="margin-top:10px">
+        <select id="add-admin-select"><option value="">-- 选择用户添加为管理员 --</option></select>
+        <button onclick="addAdmin()">➕ 添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 大区权限管理 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🗺️ 大区权限分配</h2>
+      <span style="font-size:12px;color:#888">各区域 BP 仅可见本区 + 汇总看板</span>
+    </div>
+    <div class="card-body">
+      <div id="region-grid" class="region-grid"></div>
+    </div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="btn-row">
+    <button class="btn btn-danger" onclick="location.reload()">🔄 放弃修改</button>
+    <button class="btn btn-primary" id="save-btn" onclick="savePermissions()">💾 保存权限配置</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ============ 配置 ============
+const API_BASE = 'https://vercel-deploy-snowy-nine.vercel.app';
+
+// 1099 看板大区定义
+const REGIONS = [
+  { key: 'MS中南大区', label: 'MS 中南大区', currency: 'USD' },
+  { key: 'TX德州大区', label: 'TX 德州大区', currency: 'CNY' },
+  { key: 'NE东北大区', label: 'NE 东北大区', currency: 'CNY' },
+  { key: 'WE美西大区', label: 'WE 美西大区', currency: 'USD' },
+  { key: 'GL大湖大区', label: 'GL 大湖大区', currency: 'USD' },
+  { key: 'Ground项目部', label: 'Ground 项目部', currency: 'USD' },
+  { key: 'OG美东区', label: 'OG 美东区', currency: 'USD' },
+  { key: 'OG美中区', label: 'OG 美中区', currency: 'USD' },
+  { key: 'OG美南区', label: 'OG 美南区', currency: 'USD' },
+  { key: 'OG美西区', label: 'OG 美西区', currency: 'USD' }
+];
+
+const PAGE_MAP = {
+  'summary': '1099_dashboard.html',
+  'MS中南大区': '1099_MS中南大区.html',
+  'TX德州大区': '1099_TX德州大区.html',
+  'NE东北大区': '1099_NE东北大区.html',
+  'WE美西大区': '1099_WE美西大区.html',
+  'GL大湖大区': '1099_GL大湖大区.html',
+  'Ground项目部': '1099_Ground项目部.html',
+  'OG美东区': '1099_Ground_OG美东区.html',
+  'OG美中区': '1099_Ground_OG美中区.html',
+  'OG美南区': '1099_Ground_OG美南区.html',
+  'OG美西区': '1099_Ground_OG美西区.html',
+  'dashboard': '1099_dashboard.html'
+};
+
+const COMMON_PAGES = ['summary', 'dashboard'];
+
+// ============ 状态 ============
+let token = localStorage.getItem('auth_token');
+let currentUser = null;
+let permissions = null;
+let userPool = {}; // { open_id: { name, email, mobile, department } }
+
+// ============ 初始化 ============
+async function init() {
+  if (!token) {
+    window.location.href = 'login.html';
+    return;
+  }
+  try {
+    const resp = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) { localStorage.removeItem('auth_token'); window.location.href = 'login.html'; return; }
+    currentUser = await resp.json();
+    if (currentUser.role !== 'admin') {
+      showToast('仅超级管理员可访问此页面', 'error');
+      setTimeout(() => window.location.href = currentUser.pages[0] || 'login.html', 2000);
+      return;
+    }
+    document.getElementById('current-user-name').textContent = `${currentUser.name} (管理员)`;
+    showMeInfo();
+    await loadPermissions();
+    renderAll();
+  } catch (e) {
+    showToast('初始化失败: ' + e.message, 'error');
+  }
+}
+
+function showMeInfo() {
+  document.getElementById('me-info').innerHTML = `
+    <div class="section-row"><span class="label">姓名</span><span class="value">${currentUser.name}</span></div>
+    <div class="section-row"><span class="label">Open ID</span><span class="value" style="font-family:monospace;font-size:12px">${currentUser.open_id}</span></div>
+    <div class="section-row"><span class="label">角色</span><span class="value">👑 超级管理员</span></div>
+  `;
+}
+
+async function loadPermissions() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/admin/permissions`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (resp.ok) {
+      permissions = await resp.json();
+    } else {
+      throw new Error('加载权限失败');
+    }
+  } catch (e) {
+    showToast('加载权限配置失败: ' + e.message, 'error');
+  }
+}
+
+// ============ 搜索用户 ============
+async function searchUsers() {
+  const q = document.getElementById('search-input').value.trim();
+  if (q.length < 2) { showToast('请输入至少2个字符', 'error'); return; }
+
+  const btn = document.getElementById('search-btn');
+  btn.disabled = true;
+  btn.textContent = '搜索中...';
+  document.getElementById('search-results').innerHTML = '<div class="loading"><span class="spinner"></span></div>';
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/admin/users/search?q=${encodeURIComponent(q)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.message || '搜索失败');
+    }
+    const data = await resp.json();
+    // 存入 userPool
+    (data.users || []).forEach(u => { userPool[u.open_id] = u; });
+    renderSearchResults(data.users || []);
+    updateUserPoolUI();
+    renderAll();
+  } catch (e) {
+    document.getElementById('search-results').innerHTML = `<p style="color:#d93025">❌ ${e.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '搜索';
+  }
+}
+
+function renderSearchResults(users) {
+  const el = document.getElementById('search-results');
+  if (!users.length) {
+    el.innerHTML = '<p style="color:#888;text-align:center;padding:12px">未找到匹配用户</p>';
+    return;
+  }
+  el.innerHTML = users.map(u => `
+    <div class="search-result-item">
+      <div class="info">
+        <div class="name">${u.name} <span style="font-family:monospace;font-size:11px;color:#aaa">${u.open_id}</span></div>
+        <div class="meta">${u.email || ''} ${u.mobile || ''}</div>
+        <div class="sub">${u.department || ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateUserPoolUI() {
+  const el = document.getElementById('user-pool');
+  const list = document.getElementById('user-pool-list');
+  const keys = Object.keys(userPool);
+  if (keys.length === 0) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  list.innerHTML = keys.map(id => {
+    const u = userPool[id];
+    return `<span class="tag tag-region">${u.name} <span style="font-family:monospace;opacity:.6;font-size:10px">${id.substring(0,12)}...</span></span>`;
+  }).join('');
+}
+
+// ============ 渲染全部 ============
+function renderAll() {
+  if (!permissions) return;
+  renderAdmins();
+  renderRegions();
+  updateSelects();
+}
+
+function renderAdmins() {
+  const el = document.getElementById('admin-list');
+  const admins = permissions.admin_open_ids || [];
+  el.innerHTML = admins.map(id => {
+    const u = userPool[id];
+    const name = u ? u.name : `<span style="font-family:monospace;font-size:11px">${id.substring(0,16)}...</span>`;
+    return `<span class="tag tag-admin">👑 ${name} <span class="tag-remove" onclick="removeAdmin('${id}')" title="取消管理员">×</span></span>`;
+  }).join('');
+}
+
+function renderRegions() {
+  const grid = document.getElementById('region-grid');
+  grid.innerHTML = REGIONS.map(r => {
+    const assigned = permissions.region_permissions[r.key] || [];
+    return `
+    <div class="region-card">
+      <h4>
+        ${r.label}
+        <span class="count">${r.currency} · ${assigned.length}人</span>
+      </h4>
+      <div class="tag-list" id="region-tags-${r.key}">
+        ${assigned.map(id => {
+          const u = userPool[id];
+          const name = u ? u.name : `<span style="font-family:monospace;font-size:10px">${id.substring(0,12)}...</span>`;
+          return `<span class="tag tag-region">${name} <span class="tag-remove" onclick="removeFromRegion('${r.key}','${id}')">×</span></span>`;
+        }).join('')}
+        ${assigned.length === 0 ? '<span class="empty-hint">暂无分配用户</span>' : ''}
+      </div>
+      <div class="add-user-row">
+        <select id="select-${r.key}"><option value="">-- 添加用户 --</option></select>
+        <button onclick="addToRegion('${r.key}')">➕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateSelects() {
+  // 更新所有 select 的选项
+  const poolIds = Object.keys(userPool);
+  const allSelects = document.querySelectorAll('[id^="select-"]');
+  allSelects.forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- 选择用户 --</option>' +
+      poolIds.map(id => `<option value="${id}" ${id===current?'selected':''}>${userPool[id].name} (${id.substring(0,12)}...)</option>`).join('');
+  });
+
+  // 更新管理员选择器
+  const adminSel = document.getElementById('add-admin-select');
+  const admins = permissions.admin_open_ids || [];
+  adminSel.innerHTML = '<option value="">-- 选择用户添加为管理员 --</option>' +
+    poolIds.filter(id => !admins.includes(id))
+      .map(id => `<option value="${id}">${userPool[id].name} (${id.substring(0,12)}...)</option>`).join('');
+}
+
+// ============ 操作 ============
+function addAdmin() {
+  const sel = document.getElementById('add-admin-select');
+  const id = sel.value;
+  if (!id) return;
+  if (!permissions.admin_open_ids.includes(id)) {
+    permissions.admin_open_ids.push(id);
+    renderAll();
+  }
+}
+
+function removeAdmin(id) {
+  permissions.admin_open_ids = permissions.admin_open_ids.filter(x => x !== id);
+  renderAll();
+}
+
+function addToRegion(regionKey) {
+  const sel = document.getElementById(`select-${regionKey}`);
+  const id = sel.value;
+  if (!id) return;
+  if (!permissions.region_permissions[regionKey]) {
+    permissions.region_permissions[regionKey] = [];
+  }
+  if (!permissions.region_permissions[regionKey].includes(id)) {
+    permissions.region_permissions[regionKey].push(id);
+    renderAll();
+  }
+}
+
+function removeFromRegion(regionKey, id) {
+  permissions.region_permissions[regionKey] = permissions.region_permissions[regionKey].filter(x => x !== id);
+  renderAll();
+}
+
+// ============ 保存 ============
+async function savePermissions() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+
+  const payload = {
+    admin_open_ids: permissions.admin_open_ids,
+    region_permissions: permissions.region_permissions,
+    page_map: PAGE_MAP,
+    common_pages_for_region_bp: COMMON_PAGES
+  };
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/admin/permissions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.message || '保存失败');
+    }
+    showToast('✅ 权限配置已保存到 Supabase', 'success');
+  } catch (e) {
+    showToast('保存失败: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 保存权限配置';
+  }
+}
+
+// ============ 工具 ============
+function showToast(msg, type) {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function logout() {
+  localStorage.removeItem('auth_token');
+  window.location.href = 'login.html';
+}
+
+init();
+</script>
+</body>
+</html>
