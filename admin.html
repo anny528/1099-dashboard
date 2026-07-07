@@ -66,6 +66,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 @keyframes spin{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
 .user-pool-hint{font-size:11px;color:#888;margin-top:4px}
+.upload-zone{border:2px dashed #d1d5db;border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc}
+.upload-zone:hover,.upload-zone.dragover{border-color:#1a73e8;background:#f0f4ff}
+.upload-zone .icon{font-size:40px;margin-bottom:8px}
+.upload-zone .label{font-size:14px;color:#666;font-weight:500}
+.upload-zone .sub{font-size:12px;color:#999;margin-top:4px}
+.upload-zone input[type=file]{display:none}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.preview-cell{background:#f7f8fa;border-radius:8px;padding:12px;text-align:center}
+.preview-cell .v{font-size:18px;font-weight:700;color:#1a1a2e}
+.preview-cell .l{font-size:11px;color:#888;margin-top:2px}
+.field-map-table{width:100%;font-size:12px;border-collapse:collapse}
+.field-map-table th{background:#f0f4ff;color:#1a73e8;padding:8px 10px;text-align:left;font-weight:600;border:1px solid #dce3f0;font-size:11px}
+.field-map-table td{padding:8px 10px;border:1px solid #e8e8e8;vertical-align:top}
+.field-map-table tr:hover td{background:#fafbfc}
+.field-map-table .col-excel{color:#dc2626;font-family:monospace;font-size:10px;white-space:nowrap}
+.field-map-table .col-field{color:#1a73e8;font-family:monospace;font-size:11px}
+.field-map-table .col-calc{color:#666;font-size:11px}
 </style>
 </head>
 <body>
@@ -83,6 +100,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <div class="card">
     <div class="card-header"><h2>🔐 当前登录</h2></div>
     <div class="card-body" id="me-info">加载中...</div>
+  </div>
+
+  <!-- Excel 数据上传（仅管理员可见） -->
+  <div class="card" id="upload-card">
+    <div class="card-header">
+      <h2>📊 上传薪酬数据</h2>
+      <span style="font-size:12px;color:#888">上传 1099 Excel 原始数据，自动解析并更新看板</span>
+    </div>
+    <div class="card-body">
+      <!-- 上传区域 -->
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📁</div>
+        <div class="label">点击选择或拖拽 Excel 文件到此处</div>
+        <div class="sub">支持 .xlsx 格式，最大 50MB</div>
+        <input type="file" id="file-input" accept=".xlsx" onchange="handleFileSelect(event)">
+      </div>
+
+      <!-- 上传进度 -->
+      <div id="upload-progress" class="hidden" style="margin-top:12px;padding:10px;background:#f0f4ff;border-radius:6px;text-align:center">
+        <span class="spinner" style="margin-right:8px"></span>
+        <span id="upload-status-text">解析中...</span>
+      </div>
+
+      <!-- 解析结果预览 -->
+      <div id="upload-preview" class="hidden">
+        <div style="margin-top:14px;padding:12px;background:#e8f5e9;border-radius:6px;font-size:12px;color:#2e7d32" id="upload-success-msg"></div>
+        <div class="preview-grid" id="preview-grid"></div>
+        <div style="margin-top:14px">
+          <h4 style="font-size:13px;color:#333;margin-bottom:8px">📋 最新解析数据（月度×区域明细）</h4>
+          <table id="preview-table" class="field-map-table">
+            <thead>
+              <tr><th>月份</th><th>区域</th><th>人数</th><th>总工时</th><th>人均工时</th><th>原币成本(USD)</th><th>本币成本(CNY)</th><th>人均成本(CNY)</th></tr>
+            </thead>
+            <tbody id="preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- 搜索用户 -->
@@ -124,6 +179,103 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
     </div>
     <div class="card-body">
       <div id="region-grid" class="region-grid"></div>
+    </div>
+  </div>
+
+  <!-- Excel → 指标映射逻辑说明 -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🔗 字段映射 & 计算逻辑</h2>
+      <span style="font-size:12px;color:#888">Excel → DATA 对象 → 看板指标 完整链路</span>
+    </div>
+    <div class="card-body">
+      <table class="field-map-table">
+        <thead>
+          <tr><th style="width:5%">Excel列</th><th style="width:10%">字段名</th><th style="width:14%">DATA 路径</th><th style="width:18%">面板指标</th><th style="width:23%">计算逻辑</th><th style="width:30%">穿透/筛选逻辑</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-excel">A(0)</td>
+            <td>薪酬月份</td>
+            <td class="col-field">months[]<br>months_short[]</td>
+            <td>月度趋势X轴<br>最新月/环比KPI</td>
+            <td class="col-calc">datetime→YYYY-MM<br>months_short = 月份数+"月"<br>ai=len-1（最新）<br>mi=len-2（前月）</td>
+            <td class="col-calc">区域筛选：按 month 过滤 detail_rows<br>环比：mom(a,b)=(a-b)/b×100%</td>
+          </tr>
+          <tr>
+            <td class="col-excel">C(2)</td>
+            <td>司机姓名</td>
+            <td class="col-field">total.unique_persons</td>
+            <td>累计人数（去重）</td>
+            <td class="col-calc">全局跨月去重 Set(name)<br>detail_rows.person_count = Set(name) per (月×区)</td>
+            <td class="col-calc">区域筛选：过滤后重新 sum person_count<br>人均=总额÷人月数</td>
+          </tr>
+          <tr>
+            <td class="col-excel">E(4)</td>
+            <td>区域组织</td>
+            <td class="col-field">regions[]<br>REGION_COLORS</td>
+            <td>区域筛选按钮<br>成本分布柱状<br>人数趋势折线<br>成本占比饼图</td>
+            <td class="col-calc">固定顺序: MS/TX/NE/WE/GL/Ground<br>颜色映射: 紫/绿/蓝/橙/粉/青</td>
+            <td class="col-calc">点击按钮 → currentRegion=区域名<br>→ 过滤 detail_rows → 重算全部KPI<br>饼图含人数标注（name+pct+¥+人）</td>
+          </tr>
+          <tr>
+            <td class="col-excel">F(5)</td>
+            <td>四级组织</td>
+            <td class="col-field">Ground子看板</td>
+            <td>Ground 子区域<br>（OG美东/美中/美南/美西）</td>
+            <td class="col-calc">仅Ground数据按四级组织拆分<br>生成4个独立HTML子看板</td>
+            <td class="col-calc">Ground项目部看板 = 4子区域聚合<br>子看板固定 currentRegion=四级组织名</td>
+          </tr>
+          <tr>
+            <td class="col-excel">G(6)</td>
+            <td>实际工时</td>
+            <td class="col-field">detail_rows[].hours<br>detail_rows[].avg_hours<br>monthly.hours[]<br>total.hours</td>
+            <td>累计工时 KPI<br>月度趋势折线<br>人均月工时 KPI<br>各区人均工时对比</td>
+            <td class="col-calc">hours = sum(工时) per (月×区)<br>avg_hours = hours / person_count<br>total.hours = 全局累计<br>月度趋势: mHours = 按月聚合</td>
+            <td class="col-calc">区域筛选: 过滤后重新聚合<br>环比: 最新月工时 vs 前月<br>显示: 万h（折线）→ ÷10000</td>
+          </tr>
+          <tr>
+            <td class="col-excel">H(7)</td>
+            <td>原币金额<br>(USD)</td>
+            <td class="col-field">detail_rows[].orig_cost<br>total.cost_orig</td>
+            <td>USD区域原币成本<br>明细表原币列</td>
+            <td class="col-calc">orig_cost = sum(原币) per (月×区)<br>仅 MS/WE/GL/Ground 使用 USD 显示</td>
+            <td class="col-calc">USD 区域: apply_usd_conversion<br>→ ¥→$，W→W2（人均2位小数）<br>CNY 区域: 不显示原币</td>
+          </tr>
+          <tr>
+            <td class="col-excel">I(8)</td>
+            <td>本币金额<br>(CNY)</td>
+            <td class="col-field">detail_rows[].cost<br>detail_rows[].avg_cost<br>monthly.cost[]<br>total.cost_local</td>
+            <td>累计成本 KPI<br>月度趋势柱状<br>人均月成本 KPI<br>成本分布柱状<br>成本占比饼图</td>
+            <td class="col-calc">cost = sum(本币) per (月×区)<br>avg_cost = cost / person_count<br>monthly.cost = 按月 total cost<br>W(n) = (n/10000).toFixed(0) 万元<br>W2(n) = (n/10000).toFixed(2) 万元</td>
+            <td class="col-calc">人均月成本 = total.cost_local / total.person_months<br>区域筛选: 过滤后重新计算<br>环比: mom(cost_ai, cost_mi)<br>正数绿色 → +%，负数红色 → -%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 style="font-size:13px;color:#333;margin:16px 0 8px">📐 派生指标公式速查</h4>
+      <table class="field-map-table">
+        <thead><tr><th style="width:25%">指标</th><th style="width:30%">公式</th><th style="width:45%">说明</th></tr></thead>
+        <tbody>
+          <tr><td><b>人均月成本</b></td><td class="col-calc">avg_cost_per_person = cost / person_count</td><td class="col-calc">区域级=该区总成本÷该区人月数；全局=总成本÷总人月数。全部2位小数(W2)</td></tr>
+          <tr><td><b>人均月工时</b></td><td class="col-calc">avg_hours_per_person = hours / person_count</td><td class="col-calc">区域级=该区总工时÷该区人月数；全局=总工时÷总人月数。1位小数后+h</td></tr>
+          <tr><td><b>环比变化率</b></td><td class="col-calc">mom(a,b) = (a-b)/b × 100%</td><td class="col-calc">a=最新月值，b=前月值。正绿色+前缀，负红色-前缀。b≤0 显示"—"</td></tr>
+          <tr><td><b>成本占比</b></td><td class="col-calc">pct = 各区cost / 全部cost合计 × 100%</td><td class="col-calc">环形图标注: 区域名 + pct% + ¥万 + 人数</td></tr>
+          <tr><td><b>万元换算</b></td><td class="col-calc">W(n)=(n/10000).toFixed(0) &nbsp; W2(n)=(n/10000).toFixed(2)</td><td class="col-calc">总额用W(整数)，人均用W2(2位)。USD区域→FMTU=$万，CNY区域→FMTW=¥万</td></tr>
+          <tr><td><b>去重人数</b></td><td class="col-calc">unique_persons = Set(all names)</td><td class="col-calc">跨所有月份去重计数。person_months = 各月人数相加（不去重跨月）</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="font-size:13px;color:#333;margin:16px 0 8px">🪙 USD vs CNY 区域差异</h4>
+      <table class="field-map-table">
+        <thead><tr><th>项目</th><th>USD 区域 (MS/WE/GL/Ground)</th><th>CNY 区域 (TX/NE)</th></tr></thead>
+        <tbody>
+          <tr><td>成本数据源</td><td class="col-calc">r.cost → r.orig_cost (原币USD)</td><td class="col-calc">r.cost (本币CNY)</td></tr>
+          <tr><td>金额格式</td><td class="col-calc">FMTU = $+W(n)+万</td><td class="col-calc">FMTW = ¥+W(n)+万</td></tr>
+          <tr><td>人均格式</td><td class="col-calc">W2 → toFixed(2) (USD万元)</td><td class="col-calc">W2 → toFixed(2) (CNY万元)</td></tr>
+          <tr><td>标签文字</td><td class="col-calc">CNY→USD, 万h→h, 本币→原币</td><td class="col-calc">保持 CNY / 本币</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -430,6 +582,115 @@ function showToast(msg, type) {
 function logout() {
   localStorage.removeItem('auth_token');
   window.location.href = 'login.html';
+}
+
+// ============ Excel 上传 ============
+let uploadZone = document.getElementById('upload-zone');
+
+// 拖拽事件
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) uploadFile(files[0]);
+});
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) uploadFile(file);
+}
+
+async function uploadFile(file) {
+  if (!file.name.endsWith('.xlsx')) {
+    showToast('请上传 .xlsx 格式文件', 'error');
+    return;
+  }
+
+  const progress = document.getElementById('upload-progress');
+  const statusText = document.getElementById('upload-status-text');
+  const preview = document.getElementById('upload-preview');
+  preview.classList.add('hidden');
+  progress.classList.remove('hidden');
+  statusText.textContent = '上传并解析中...';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const resp = await fetch(`${API_BASE}/api/admin/upload-excel`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ message: '上传失败' }));
+      throw new Error(err.message || `HTTP ${resp.status}`);
+    }
+
+    const result = await resp.json();
+    showUploadPreview(result);
+    showToast(`✅ 解析成功！${result.meta.record_count}条记录，${result.meta.month_count}个月，${result.meta.unique_persons}人`, 'success');
+
+  } catch (e) {
+    showToast('上传失败: ' + e.message, 'error');
+  } finally {
+    progress.classList.add('hidden');
+  }
+}
+
+function showUploadPreview(result) {
+  const preview = document.getElementById('upload-preview');
+  const msg = document.getElementById('upload-success-msg');
+  const grid = document.getElementById('preview-grid');
+  const tbody = document.getElementById('preview-tbody');
+
+  const m = result.meta;
+  const dp = result.data_preview;
+  const t = dp.total;
+
+  msg.innerHTML = `✅ <b>${result.file_name}</b> 解析完成 — ${m.record_count}条原始记录 · ${m.month_count}个月（${m.month_range}）· ${m.unique_persons}人（去重）· ${m.regions_found.length}个区域`;
+
+  grid.innerHTML = `
+    <div class="preview-cell"><div class="v">¥${W(t.cost_local)}万</div><div class="l">累计本币成本</div></div>
+    <div class="preview-cell"><div class="v">${FMTN(t.unique_persons)}人</div><div class="l">去重人数</div></div>
+    <div class="preview-cell"><div class="v">${FMTH(t.hours)}h</div><div class="l">累计工时</div></div>
+    <div class="preview-cell"><div class="v">¥${W2(t.avg_cost_per_person)}万</div><div class="l">人均月成本</div></div>
+    <div class="preview-cell"><div class="v">${t.avg_hours_per_person.toFixed(1)}h</div><div class="l">人均月工时</div></div>
+    <div class="preview-cell"><div class="v">${m.regions_found.join(', ')}</div><div class="l">识别区域</div></div>
+  `;
+
+  // 渲染明细预览（最新月×区域）
+  const months = dp.months;
+  const latestMonth = months[months.length - 1];
+  const detailRows = result.data_preview.monthly;
+  const allRows = [];
+  for (let i = 0; i < months.length; i++) {
+    allRows.push({
+      month: months[i],
+      person_count: detailRows.person_count[i],
+      hours: detailRows.hours[i],
+      cost: detailRows.cost[i],
+      avg_cost: detailRows.avg_cost_per_person[i],
+      avg_hours: detailRows.avg_hours_per_person[i]
+    });
+  }
+  tbody.innerHTML = allRows.map(r => `
+    <tr>
+      <td>${r.month}</td>
+      <td>全部区域</td>
+      <td>${FMTN(r.person_count)}</td>
+      <td>${FMTN(r.hours)}h</td>
+      <td>${r.avg_hours.toFixed(1)}h</td>
+      <td>—</td>
+      <td>¥${W(r.cost)}万</td>
+      <td>¥${W2(r.avg_cost)}万</td>
+    </tr>
+  `).join('');
+
+  preview.classList.remove('hidden');
 }
 
 init();
