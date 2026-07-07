@@ -229,12 +229,12 @@
         var pages = user.pages || [];
 
         // 优先跳转到用户有权访问的第一个页面
-        // 优先顺序: index.html → 1099_dashboard.html → dashboard.html → 第一个可用页面
+        // 优先顺序: admin.html → index.html → dashboard.html → 第一个可用页面
         var target = null;
-        if (pages.indexOf('index.html') !== -1) {
+        if (pages.indexOf('admin.html') !== -1) {
+          target = 'admin.html';
+        } else if (pages.indexOf('index.html') !== -1) {
           target = 'index.html';
-        } else if (pages.indexOf('1099_dashboard.html') !== -1) {
-          target = 'index.html'; // 1099_dashboard.html 不存在，映射到 index.html
         } else if (pages.indexOf('dashboard.html') !== -1) {
           target = 'dashboard.html';
         } else if (pages.length > 0) {

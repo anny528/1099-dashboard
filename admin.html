@@ -318,13 +318,14 @@ const PAGE_MAP = {
   'OG美中区': '1099_Ground_OG美中区.html',
   'OG美南区': '1099_Ground_OG美南区.html',
   'OG美西区': '1099_Ground_OG美西区.html',
-  'dashboard': '1099_dashboard.html'
+  'dashboard': '1099_dashboard.html',
+  'admin': 'admin.html'
 };
 
 const COMMON_PAGES = ['summary', 'dashboard'];
 
 // ============ 状态 ============
-let token = localStorage.getItem('auth_token');
+let token = localStorage.getItem('feishu_token');
 let currentUser = null;
 let permissions = null;
 let userPool = {}; // { open_id: { name, email, mobile, department } }
@@ -339,7 +340,7 @@ async function init() {
     const resp = await fetch(`${API_BASE}/api/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!resp.ok) { localStorage.removeItem('auth_token'); window.location.href = 'login.html'; return; }
+    if (!resp.ok) { localStorage.removeItem('feishu_token'); window.location.href = 'login.html'; return; }
     currentUser = await resp.json();
     if (currentUser.role !== 'admin') {
       showToast('仅超级管理员可访问此页面', 'error');
@@ -580,7 +581,7 @@ function showToast(msg, type) {
 }
 
 function logout() {
-  localStorage.removeItem('auth_token');
+  localStorage.removeItem('feishu_token');
   window.location.href = 'login.html';
 }
 
@@ -705,6 +706,12 @@ function showUploadPreview(result) {
 
   preview.classList.remove('hidden');
 }
+
+// 数字格式化辅助函数
+function W(n) { return (n / 10000).toFixed(0); }
+function W2(n) { return (n / 10000).toFixed(2); }
+function FMTN(n) { return n != null ? n.toLocaleString() : '0'; }
+function FMTH(n) { return n != null ? (n / 10000).toFixed(1) : '0.0'; }
 
 init();
 </script>

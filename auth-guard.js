@@ -122,6 +122,7 @@
       bar.innerHTML =
         '<span>' + (user.name || '用户') + '</span>' +
         '<span style="opacity:0.8;">' + roleText + regionsText + '</span>' +
+        (user.role === 'admin' ? '<a href="admin.html" style="color:#fff;opacity:0.9;font-size:11px;text-decoration:none;background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:3px;">管理</a>' : '') +
         '<span style="opacity:0.6;font-size:11px;">| 退出</span>';
 
       bar.onclick = function () {
