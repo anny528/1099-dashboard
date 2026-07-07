@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1099司机薪酬看板 | 2026年1月-5月</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background:#f0f2f5; color:#1a1a2e; padding:24px; }
+.header { text-align:center; margin-bottom:28px; }
+.header h1 { font-size:28px; font-weight:700; color:#1a1a2e; }
+.header p { font-size:14px; color:#666; margin-top:6px; }
+
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px; }
+.kpi-card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); text-align:center; }
+.kpi-card .label { font-size:13px; color:#888; margin-bottom:6px; }
+.kpi-card .value { font-size:26px; font-weight:700; color:#1a1a2e; }
+.kpi-card .sub { font-size:12px; color:#999; margin-top:4px; }
+
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.chart-card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.chart-card.full { grid-column:1/-1; margin-bottom:20px; }
+.chart-card h3 { font-size:16px; font-weight:600; color:#333; margin-bottom:16px; }
+
+.table-card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:20px; overflow-x:auto; }
+.table-card h3 { font-size:16px; font-weight:600; color:#333; margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:#f7f8fa; padding:10px 12px; text-align:right; font-weight:600; color:#555; border-bottom:2px solid #e8e8e8; white-space:nowrap; }
+th:first-child, th:nth-child(2) { text-align:left; }
+td { padding:9px 12px; text-align:right; border-bottom:1px solid #f0f0f0; }
+td:first-child, td:nth-child(2) { text-align:left; }
+tr:hover td { background:#f7f8fa; }
+.num { font-variant-numeric:tabular-nums; }
+.highlight { color:#2563eb; font-weight:600; }
+#regionFilter button {
+  padding: 8px 20px; border: 2px solid #d1d5db; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
+  background: #fff; color: #555;
+}
+#regionFilter button:hover { border-color: #2563eb; color: #2563eb; background: #f0f4ff; }
+#regionFilter button.active { border-color: #2563eb; background: #2563eb; color: #fff; }
+
+
+.footer { text-align:center; padding:16px; color:#999; font-size:12px; }
+
+@media (max-width:900px) {
+  .kpi-row { grid-template-columns:repeat(3,1fr); }
+  .chart-grid { grid-template-columns:1fr; }
+}
+</style>
+  <script src="config.js"></script>
+<script src="auth-guard.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <h1>1099司机薪酬看板</h1>
+  <p>2026年1月 - 5月 | 按人数统计（已去重） | 金额单位：万元</p>
+</div>
+
+<!-- 区域筛选按钮 -->
+<div id="regionFilter" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;"></div>
+
+<!-- KPI Cards -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="label">累计人数（去重）</div>
+    <div class="value" id="kpi-persons">-</div>
+    <div class="sub">每月去重后合计</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">累计人力成本（本币）</div>
+    <div class="value" id="kpi-cost">-</div>
+    <div class="sub">CNY 万元</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">累计工时</div>
+    <div class="value" id="kpi-hours">-</div>
+    <div class="sub">小时</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">人均月成本</div>
+    <div class="value" id="kpi-avgcost">-</div>
+    <div class="sub">CNY 万元 / 人·月</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">人均月工时</div>
+    <div class="value" id="kpi-avghours">-</div>
+    <div class="sub">小时 / 人·月</div>
+  </div>
+</div>
+
+<!-- 5月总数据 & 环比差异率 -->
+<div class="kpi-row" id="aprKpiRow" style="margin-bottom:20px;"></div>
+
+<!-- 1. 月度成本、工时与人数趋势 -->
+<div class="chart-card full">
+  <h3>月度成本、工时与人数趋势</h3>
+  <canvas id="chartTrend" style="max-height:500px;"></canvas>
+</div>
+
+<!-- 2. 各区月度成本分布（分组柱状） -->
+<div class="chart-card full" id="sectionGrouped">
+  <h3>各区月度成本分布（分组柱状）</h3>
+  <canvas id="chartGrouped" style="max-height:380px;"></canvas>
+</div>
+
+<!-- 3. 各区月度人数趋势 + 5月各区人均 -->
+<div class="chart-grid" style="margin-bottom:20px;">
+  <div class="chart-card" id="sectionRegionPersons">
+    <h3>各区月度人数趋势</h3>
+    <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
+  </div>
+  <div class="chart-card" id="sectionAprilPC">
+    <h3>5月各区人均月成本 & 人均月工时</h3>
+    <canvas id="chartAprilPerCapita" style="max-height:260px;"></canvas>
+  </div>
+</div>
+
+<!-- 4. 各区成本与人数占比 -->
+<div class="chart-card" id="sectionPie" style="margin-bottom:20px; text-align:center;">
+  <h3>各区成本与人数占比（1-5月累计）</h3>
+  <canvas id="chartPie" style="max-height:550px;"></canvas>
+</div>
+
+<!-- Detailed Table -->
+<div class="table-card">
+  <h3>明细数据表（月度 x 区域 | 按人数统计）</h3>
+  <table id="detailTable">
+    <thead>
+      <tr>
+        <th>月份</th><th>区域</th><th>人数</th><th>总工时(h)</th>
+        <th>人均工时(h)</th><th>原币月总成本</th><th>本币月总成本（CNY）</th><th>人均成本(CNY万元)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="footer">数据更新时间：2026-06-05 | 1099司机实发人力成本 | 按人数去重统计</div>
+
+<script>
+const DATA = {"total":{"unique_persons":426,"person_months":1369,"cost_local":54903617.74,"cost_orig":7919173.37,"hours":306546.17,"avg_cost_per_person":40104.91,"avg_hours_per_person":223.92},"months":["2026-01","2026-02","2026-03","2026-04","2026-05"],"months_short":["1月","2月","3月","4月","5月"],"monthly":{"person_count":[245,233,264,289,338],"hours":[54696.61,50935.73,60922.1,65090.48,74901.25],"cost":[9721495.9,9085543.39,10779701.65,11733667.55,13583209.25],"avg_cost_per_person":[39679.58,38993.75,40832.2,40600.93,40187.01],"avg_hours_per_person":[223.25,218.61,230.77,225.23,221.6]},"regions":["MS 中南大区","TX 德州大区","NE 东北大区","WE 美西大区","GL 大湖大区","Ground项目部"],"region_stats":{"person_count":[84,152,572,450,66,45],"hours":[18203.73,22132.82,141347.97,103504.89,14252.94,7103.82],"cost":[3242028.07,4827292.22,25299978.89,17788616.01,2497635.56,1248066.99],"avg_cost_per_person":[38595.57,31758.5,44230.73,39530.26,37842.96,27734.82],"avg_hours_per_person":[216.71,145.61,247.11,230.01,215.95,157.86]},"monthly_region_cost":[{"month":"2026-01","MS 中南大区":489930.7,"TX 德州大区":762196.68,"NE 东北大区":4568629.19,"WE 美西大区":3086687.05,"GL 大湖大区":423042.39,"Ground项目部":391009.89},{"month":"2026-02","MS 中南大区":459208.96,"TX 德州大区":865606.87,"NE 东北大区":4341600.92,"WE 美西大区":2831269.03,"GL 大湖大区":378307.99,"Ground项目部":209549.62},{"month":"2026-03","MS 中南大区":583403.12,"TX 德州大区":966423.64,"NE 东北大区":5245360.08,"WE 美西大区":3287957.83,"GL 大湖大区":472580.17,"Ground项目部":223976.81},{"month":"2026-04","MS 中南大区":805453.66,"TX 德州大区":1135356.46,"NE 东北大区":5566955.04,"WE 美西大区":3431459.23,"GL 大湖大区":580102.64,"Ground项目部":214340.52},{"month":"2026-05","MS 中南大区":904031.63,"TX 德州大区":1097708.57,"NE 东北大区":5577433.66,"WE 美西大区":5151242.87,"GL 大湖大区":643602.37,"Ground项目部":209190.15}],"monthly_region_persons":[{"month":"2026-01","MS 中南大区":12,"TX 德州大区":29,"NE 东北大区":112,"WE 美西大区":72,"GL 大湖大区":9,"Ground项目部":11},{"month":"2026-02","MS 中南大区":12,"TX 德州大区":28,"NE 东北大区":104,"WE 美西大区":69,"GL 大湖大区":10,"Ground项目部":10},{"month":"2026-03","MS 中南大区":19,"TX 德州大区":30,"NE 东北大区":119,"WE 美西大区":75,"GL 大湖大区":12,"Ground项目部":9},{"month":"2026-04","MS 中南大区":20,"TX 德州大区":32,"NE 东北大区":122,"WE 美西大区":91,"GL 大湖大区":16,"Ground项目部":8},{"month":"2026-05","MS 中南大区":21,"TX 德州大区":33,"NE 东北大区":115,"WE 美西大区":143,"GL 大湖大区":19,"Ground项目部":7}],"detail_rows":[{"month":"2026-01","region":"MS 中南大区","person_count":12,"hours":2893.89,"avg_hours":241.16,"cost":489930.7,"avg_cost":40827.56,"orig_cost":69703.32},{"month":"2026-01","region":"TX 德州大区","person_count":29,"hours":3887.17,"avg_hours":134.04,"cost":762196.68,"avg_cost":26282.64,"orig_cost":108439.09},{"month":"2026-01","region":"NE 东北大区","person_count":112,"hours":25125.75,"avg_hours":224.34,"cost":4568629.19,"avg_cost":40791.33,"orig_cost":649987.08},{"month":"2026-01","region":"WE 美西大区","person_count":72,"hours":18116.18,"avg_hours":251.61,"cost":3086687.05,"avg_cost":42870.65,"orig_cost":439148.51},{"month":"2026-01","region":"GL 大湖大区","person_count":9,"hours":2453.48,"avg_hours":272.61,"cost":423042.39,"avg_cost":47004.71,"orig_cost":60187.0},{"month":"2026-01","region":"Ground项目部","person_count":11,"hours":2220.14,"avg_hours":201.83,"cost":391009.89,"avg_cost":35546.35,"orig_cost":55629.68},{"month":"2026-02","region":"MS 中南大区","person_count":12,"hours":2752.59,"avg_hours":229.38,"cost":459208.96,"avg_cost":38267.41,"orig_cost":65904.44},{"month":"2026-02","region":"TX 德州大区","person_count":28,"hours":4024.0,"avg_hours":143.71,"cost":865606.87,"avg_cost":30914.53,"orig_cost":124229.58},{"month":"2026-02","region":"NE 东北大区","person_count":104,"hours":24028.12,"avg_hours":231.04,"cost":4341600.92,"avg_cost":41746.16,"orig_cost":623094.94},{"month":"2026-02","region":"WE 美西大区","person_count":69,"hours":16816.59,"avg_hours":243.72,"cost":2831269.03,"avg_cost":41032.88,"orig_cost":406336.15},{"month":"2026-02","region":"GL 大湖大区","person_count":10,"hours":2171.75,"avg_hours":217.18,"cost":378307.99,"avg_cost":37830.8,"orig_cost":54293.75},{"month":"2026-02","region":"Ground项目部","person_count":10,"hours":1142.68,"avg_hours":114.27,"cost":209549.62,"avg_cost":20954.96,"orig_cost":30074.0},{"month":"2026-03","region":"MS 中南大区","person_count":19,"hours":3432.95,"avg_hours":180.68,"cost":583403.12,"avg_cost":30705.43,"orig_cost":84272.71},{"month":"2026-03","region":"TX 德州大区","person_count":30,"hours":4518.17,"avg_hours":150.61,"cost":966423.64,"avg_cost":32214.12,"orig_cost":139600.11},{"month":"2026-03","region":"NE 东北大区","person_count":119,"hours":29255.22,"avg_hours":245.84,"cost":5245360.08,"avg_cost":44078.66,"orig_cost":757693.43},{"month":"2026-03","region":"WE 美西大区","person_count":75,"hours":19745.23,"avg_hours":263.27,"cost":3287957.83,"avg_cost":43839.44,"orig_cost":474946.24},{"month":"2026-03","region":"GL 大湖大区","person_count":12,"hours":2687.87,"avg_hours":223.99,"cost":472580.17,"avg_cost":39381.68,"orig_cost":68264.31},{"month":"2026-03","region":"Ground项目部","person_count":9,"hours":1282.66,"avg_hours":142.52,"cost":223976.81,"avg_cost":24886.31,"orig_cost":32353.5},{"month":"2026-04","region":"MS 中南大区","person_count":20,"hours":4346.33,"avg_hours":217.32,"cost":805453.66,"avg_cost":40272.68,"orig_cost":116405.13},{"month":"2026-04","region":"TX 德州大区","person_count":32,"hours":4760.99,"avg_hours":148.78,"cost":1135356.46,"avg_cost":35479.89,"orig_cost":164083.08},{"month":"2026-04","region":"NE 东北大区","person_count":122,"hours":31228.75,"avg_hours":255.97,"cost":5566955.04,"avg_cost":45630.78,"orig_cost":804543.03},{"month":"2026-04","region":"WE 美西大区","person_count":91,"hours":20204.11,"avg_hours":222.02,"cost":3431459.23,"avg_cost":37708.34,"orig_cost":495918.61},{"month":"2026-04","region":"GL 大湖大区","person_count":16,"hours":3311.23,"avg_hours":206.95,"cost":580102.64,"avg_cost":36256.41,"orig_cost":83837.13},{"month":"2026-04","region":"Ground项目部","person_count":8,"hours":1239.07,"avg_hours":154.88,"cost":214340.52,"avg_cost":26792.57,"orig_cost":30976.75},{"month":"2026-05","region":"MS 中南大区","person_count":21,"hours":4777.97,"avg_hours":227.52,"cost":904031.63,"avg_cost":43049.13,"orig_cost":131729.27},{"month":"2026-05","region":"TX 德州大区","person_count":33,"hours":4942.49,"avg_hours":149.77,"cost":1097708.57,"avg_cost":33263.9,"orig_cost":159950.54},{"month":"2026-05","region":"NE 东北大区","person_count":115,"hours":31710.13,"avg_hours":275.74,"cost":5577433.66,"avg_cost":48499.42,"orig_cost":812705.26},{"month":"2026-05","region":"WE 美西大区","person_count":143,"hours":28622.78,"avg_hours":200.16,"cost":5151242.87,"avg_cost":36022.68,"orig_cost":750603.67},{"month":"2026-05","region":"GL 大湖大区","person_count":19,"hours":3628.61,"avg_hours":190.98,"cost":643602.37,"avg_cost":33873.81,"orig_cost":93781.31},{"month":"2026-05","region":"Ground项目部","person_count":7,"hours":1219.27,"avg_hours":174.18,"cost":209190.15,"avg_cost":29884.31,"orig_cost":30481.75}]};
+
+const REGION_COLORS = {
+  'MS 中南大区': '#8b5cf6', 'TX 德州大区': '#10b981',
+  'NE 东北大区': '#2563eb', 'WE 美西大区': '#f59e0b',
+  'GL 大湖大区': '#ec4899', 'Ground项目部': '#06b6d4'
+};
+const REGION_COLORS_ALPHA = {
+  'MS 中南大区': 'rgba(139,92,246,0.7)', 'TX 德州大区': 'rgba(16,185,129,0.7)',
+  'NE 东北大区': 'rgba(37,99,235,0.7)', 'WE 美西大区': 'rgba(245,158,11,0.7)',
+  'GL 大湖大区': 'rgba(236,72,153,0.7)', 'Ground项目部': 'rgba(6,182,212,0.7)'
+};
+
+const W = n => (n / 10000).toFixed(0);
+const W2 = n => (n / 10000).toFixed(2);
+const FMTW = n => '¥' + W(n) + '万';
+const FMTU = n => '$' + (n / 10000).toFixed(0) + '万';
+const FMTN = n => n.toLocaleString('en-US');
+const FMTH = n => FMTN(Math.round(n));
+
+// ===== Region filter buttons =====
+let currentRegion = null;
+let charts = {};
+const filterDiv = document.getElementById('regionFilter');
+function buildFilterButtons() {
+  const allBtn = document.createElement('button');
+  allBtn.textContent = '全部'; allBtn.className = 'active';
+  allBtn.onclick = () => { currentRegion = null; renderAll(); setActive(allBtn); };
+  filterDiv.appendChild(allBtn);
+  DATA.regions.forEach(r => {
+    const btn = document.createElement('button');
+    btn.textContent = r;
+    btn.style.borderLeftWidth = '5px';
+    btn.style.borderLeftColor = REGION_COLORS[r];
+    btn.onclick = () => { currentRegion = r; renderAll(); setActive(btn); };
+    filterDiv.appendChild(btn);
+  });
+}
+function setActive(active) { filterDiv.querySelectorAll('button').forEach(b => b.classList.remove('active')); active.classList.add('active'); }
+buildFilterButtons();
+
+function renderAll() {
+  Object.values(charts).forEach(c => c.destroy()); charts = {};
+  const R = currentRegion;
+  const regions = R ? [R] : DATA.regions;
+  // 仅"全部"时显示这些板块
+  document.getElementById('sectionAprilPC').style.display = R ? 'none' : '';
+  document.getElementById('sectionPie').style.display = R ? 'none' : '';
+  document.getElementById('sectionGrouped').style.display = R ? 'none' : '';
+  document.getElementById('sectionRegionPersons').style.display = R ? 'none' : '';
+  const months = DATA.months, months_short = DATA.months_short;
+  const filtered = R ? DATA.detail_rows.filter(r => r.region === R) : DATA.detail_rows;
+
+  // KPIs
+  const totalPersons = filtered.reduce((s,r)=>s+r.person_count,0);
+  const totalCost = filtered.reduce((s,r)=>s+r.cost,0);
+  const totalHours = filtered.reduce((s,r)=>s+r.hours,0);
+  const avgCost = totalPersons>0 ? totalCost/totalPersons : 0;
+  const avgHours = totalPersons>0 ? totalHours/totalPersons : 0;
+  document.getElementById('kpi-persons').textContent = FMTN(totalPersons);
+  document.getElementById('kpi-cost').textContent = FMTW(totalCost);
+  document.getElementById('kpi-hours').textContent = FMTH(totalHours);
+  document.getElementById('kpi-avgcost').textContent = '¥'+W2(avgCost)+'万';
+  document.getElementById('kpi-avghours').textContent = avgHours.toFixed(1)+'h';
+
+  // Monthly aggregates
+  const mCost = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.cost,0));
+  const mHours = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.hours,0));
+  const mPersons = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.person_count,0));
+  const mAvgCost = months.map((_,i)=>mPersons[i]>0?mCost[i]/mPersons[i]:0);
+  const mAvgHours = months.map((_,i)=>mPersons[i]>0?mHours[i]/mPersons[i]:0);
+
+  // Latest month vs previous month KPI
+  const ai = months.length - 1, mi = months.length - 2;
+  const mom = (a,b) => b>0 ? ((a-b)/b*100).toFixed(2) : '—';
+  const momC = v => { const n=parseFloat(v); return n>=0?'#10b981':'#dc2626'; };
+  const momS = v => { const n=parseFloat(v); return n>=0?'+':''; };
+  const aprP=mPersons[ai],marP=mPersons[mi],aprC=mCost[ai],marC=mCost[mi],aprH=mHours[ai],marH=mHours[mi];
+  const aprAC=mAvgCost[ai],marAC=mAvgCost[mi],aprAH=mAvgHours[ai],marAH=mAvgHours[mi];
+  document.getElementById('aprKpiRow').innerHTML = `
+    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">5月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">5月人力成本</div><div class="value" style="font-size:22px;">${FMTW(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">5月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">5月人均月成本</div><div class="value" style="font-size:22px;">¥${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">5月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
+
+  Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif";
+  Chart.defaults.font.size = 12;
+
+  // ===== 1. 月度趋势 =====
+  const trendPlugin = { id:'trendBL', afterDraw(chart){ const ctx=chart.ctx,ca=chart.chartArea; ctx.save(); ctx.font='bold 12px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif'; ctx.fillStyle='#666'; ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillText('CNY 万元',ca.left-38,ca.bottom+6); ctx.textAlign='right'; ctx.fillText('万小时',ca.right+19,ca.bottom+6); ctx.fillText('人数',ca.right+57,ca.bottom+22); ctx.restore(); }};
+  const ctx1 = document.getElementById('chartTrend').getContext('2d');
+  const g1 = ctx1.createLinearGradient(0,0,0,400); g1.addColorStop(0,'rgba(37,99,235,0.75)'); g1.addColorStop(1,'rgba(37,99,235,0.15)');
+  const g2 = ctx1.createLinearGradient(0,0,0,400); g2.addColorStop(0,'rgba(220,38,38,0.25)'); g2.addColorStop(1,'rgba(220,38,38,0.02)');
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type:'bar',
+    data:{ labels:months_short, datasets:[
+      {label:'本币成本 (CNY万元)',data:mCost.map(v=>v/10000),backgroundColor:g1,borderColor:'#2563eb',borderWidth:1.5,borderRadius:8,yAxisID:'y',order:2},
+      {label:'总工时 (万h)',data:mHours.map(v=>v/10000),type:'line',borderColor:'#dc2626',backgroundColor:g2,borderWidth:3,fill:true,tension:0.4,pointRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#dc2626',pointBorderWidth:3,yAxisID:'y1',order:1},
+      {label:'人数',data:mPersons,type:'line',borderColor:'#7c3aed',backgroundColor:'transparent',borderWidth:3,borderDash:[10,5],fill:false,tension:0.4,pointRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#7c3aed',pointBorderWidth:3,yAxisID:'y2',order:0}
+    ]},
+    options:{ responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},layout:{padding:{bottom:22}},
+      plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:24,font:{size:12}}},datalabels:{formatter:function(v,ctx){if(ctx.datasetIndex===0)return '¥'+v.toFixed(0)+'万';if(ctx.datasetIndex===1)return v.toFixed(0)+'万h';return v+'人';},font:{size:10,weight:'bold'},color:function(ctx){if(ctx.datasetIndex===0)return '#1a1a2e';if(ctx.datasetIndex===1)return '#dc2626';return '#7c3aed';},anchor:function(ctx){return ctx.datasetIndex===0?'end':'center';},align:function(ctx){if(ctx.datasetIndex===0)return 'end';if(ctx.datasetIndex===1)return 'top';return 'bottom';},offset:function(ctx){return ctx.datasetIndex===0?6:8;},display:true}},
+      scales:{y:{position:'left',ticks:{callback:v=>'¥'+v.toFixed(0)+'万',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},y1:{position:'right',ticks:{callback:v=>v.toFixed(2),font:{size:10}},grid:{drawOnChartArea:false}},y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:10}}}}
+    },plugins:[ChartDataLabels,trendPlugin]
+  });
+
+  // ===== 2. 各区月度成本分布 =====
+  const blPlugin = {id:'bottomLeft',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='bold 12px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('CNY 万元',ca.left-38,ca.bottom+6);ctx.restore();}};
+  charts.grouped = new Chart(document.getElementById('chartGrouped'), {
+    type:'bar',
+    data:{labels:months_short,datasets:regions.map(r=>({label:r,data:months.map(m=>{const row=DATA.detail_rows.find(d=>d.region===r&&d.month===m);return row?row.cost/10000:0;}),backgroundColor:REGION_COLORS_ALPHA[r],borderColor:REGION_COLORS[r],borderWidth:1,borderRadius:4}))},
+    options:{responsive:true,maintainAspectRatio:true,layout:{padding:{bottom:22}},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{anchor:'end',align:'top',offset:0,formatter:v=>v>=1?v.toFixed(0):'',font:{size:11,weight:'bold'},color:'#444'}},scales:{y:{ticks:{callback:v=>'¥'+v.toFixed(0)+'万',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}}}},
+    plugins:[ChartDataLabels,blPlugin]
+  });
+
+  // ===== 3. 各区月度人数趋势 =====
+  charts.regionPersons = new Chart(document.getElementById('chartRegionPersons'), {
+    type:'line',
+    data:{labels:months_short,datasets:regions.map(r=>({label:r,data:months.map(m=>{const row=DATA.detail_rows.find(d=>d.region===r&&d.month===m);return row?row.person_count:0;}),borderColor:REGION_COLORS[r],backgroundColor:'transparent',borderWidth:2.5,tension:0.35,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{anchor:'end',align:'top',offset:2,formatter:v=>v+'人',font:{size:10,weight:'bold'},color:'#555'}},scales:{y:{title:{display:false},beginAtZero:false,min:0,ticks:{font:{size:10}}}}},
+    plugins:[ChartDataLabels,{id:'yUL',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('人数',ca.left+38,ca.bottom+8);ctx.restore();}}]
+  });
+
+  // ===== 3b. Latest month per-capita =====
+  const latestMonth = months[months.length - 1];
+  const aprRows = R ? DATA.detail_rows.filter(r=>r.region===R&&r.month===latestMonth) : DATA.detail_rows.filter(r=>r.month===latestMonth);
+  const aprRegs = aprRows.map(r=>r.region);
+  const aprPCC = aprRows.map(r=>r.avg_cost/10000);
+  const aprPCH = aprRows.map(r=>r.avg_hours);
+  const aprRC = aprRegs.map(r=>REGION_COLORS[r]||'#999');
+  charts.aprilPC = new Chart(document.getElementById('chartAprilPerCapita'), {
+    type:'bar',
+    data:{labels:aprRegs,datasets:[
+      {label:'人均月成本 (CNY万元)',data:aprPCC,backgroundColor:aprRC.map(c=>c+'aa'),borderColor:aprRC,borderWidth:1.5,borderRadius:6,yAxisID:'y',order:2},
+      {label:'人均月工时 (h)',data:aprPCH,type:'line',borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.06)',borderWidth:3,fill:false,tension:0.35,pointRadius:5,pointBackgroundColor:'#dc2626',pointBorderWidth:2,yAxisID:'y1',order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,layout:{padding:{bottom:30}},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{formatter:function(v,ctx){return ctx.datasetIndex===0?v.toFixed(0)+'万':v.toFixed(0)+'h';},font:{size:9,weight:'bold'},color:function(ctx){return ctx.datasetIndex===0?'#333':'#dc2626';},anchor:function(ctx){return ctx.datasetIndex===0?'end':'center';},align:function(ctx){return ctx.datasetIndex===0?'end':'bottom';},offset:function(ctx){return ctx.datasetIndex===0?6:8;},display:true}},scales:{x:{ticks:{font:{size:9},maxRotation:25,minRotation:0}},y:{position:'left',ticks:{callback:v=>v.toFixed(0)+'万',font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'},title:{display:false}},y1:{position:'right',ticks:{font:{size:9}},grid:{drawOnChartArea:false},title:{display:false}}}},
+    plugins:[ChartDataLabels,{id:'yULA',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('CNY万元',ca.left-19,ca.bottom+16);ctx.textAlign='right';ctx.fillText('小时',ca.right,ca.bottom+16);ctx.restore();}}]
+  });
+
+  // ===== 4. 环形图 =====
+  const pLabels=regions, pData=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.cost[i]/10000:0;}), pColors=regions.map(r=>REGION_COLORS[r]), pPersons=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.person_count[i]:0;});
+  const pieLabelPlugin = {
+    id: 'pieLabels',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      const total = pData.reduce((a,b)=>a+b,0);
+      if (!total) return;
+      meta.data.forEach((arc, i) => {
+        const v = pData[i];
+        const pct = (v/total*100).toFixed(1);
+        if (pct < 2) return;
+        const name = pLabels[i];
+        const n = pPersons[i];
+        const angle = (arc.startAngle + arc.endAngle) / 2;
+        const r = arc.outerRadius + 16;
+        const x = arc.x + Math.cos(angle) * r;
+        const y = arc.y + Math.sin(angle) * r;
+        const isRight = Math.cos(angle) >= 0;
+        ctx.save();
+        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif';
+        ctx.fillStyle = '#1a1a2e';
+        ctx.textAlign = isRight ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        const pad = isRight ? 4 : -4;
+        ctx.fillText(name, x + pad, y - 10);
+        ctx.fillText(pct + '%', x + pad, y);
+        ctx.fillText('¥' + v.toFixed(0) + '万 | ' + n + '人', x + pad, y + 10);
+        ctx.restore();
+      });
+    }
+  };
+  charts.pie = new Chart(document.getElementById('chartPie'), {
+    type:'doughnut',
+    data:{labels:pLabels,datasets:[{data:pData,backgroundColor:pColors,borderWidth:3,borderColor:'#fff',hoverBorderWidth:4}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'40%',layout:{padding:30},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:14,font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>{const pct=(ctx.raw/pData.reduce((a,b)=>a+b,0)*100).toFixed(1);return ctx.label+': ¥'+ctx.raw.toFixed(0)+'万 ('+pct+'%) | '+pPersons[ctx.dataIndex]+'人';}}},datalabels:false}},
+    plugins: [pieLabelPlugin]
+  });
+
+  // ===== Detail Table =====
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = '';
+  filtered.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+r.month+'</td><td>'+r.region+'</td><td class="num">'+FMTN(r.person_count)+'</td><td class="num">'+FMTN(r.hours)+'</td><td class="num">'+r.avg_hours.toFixed(1)+'h</td><td class="num">'+FMTU(r.orig_cost)+'</td><td class="num highlight">'+FMTW(r.cost)+'</td><td class="num">'+FMTW(r.avg_cost)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+renderAll();
+</script>
+</body>
+</html>
