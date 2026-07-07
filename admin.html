@@ -613,16 +613,29 @@ async function uploadFile(file) {
   const preview = document.getElementById('upload-preview');
   preview.classList.add('hidden');
   progress.classList.remove('hidden');
-  statusText.textContent = '上传并解析中...';
+  statusText.textContent = '读取文件中...';
 
   try {
-    const formData = new FormData();
-    formData.append('file', file);
+    // 读取文件为 base64
+    const fileBase64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1]; // 去掉 data:...;base64, 前缀
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    statusText.textContent = '上传并解析中...';
 
     const resp = await fetch(`${API_BASE}/api/admin/upload-excel`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ fileName: file.name, fileBase64 })
     });
 
     if (!resp.ok) {
