@@ -33,6 +33,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          # 先尝试拉取远程变更（rebase 模式），避免推送冲突
-          git pull --rebase --autostash origin main || git pull --rebase origin main
-          git diff --staged --quiet || (git commit -m "🤖 自动更新看板 [$(date -u +'%Y-%m-%d %H:%M UTC')]" && git push)
+          # 强制采用本地版本（重新生成的 HTML 永远以本地为准）
+          # 先尝试 rebase 拉取远程，如果冲突则用 ours 策略
+          git pull --rebase --strategy-option=theirs --autostash origin main || true
+          git status
+          # 检查 rebase 是否完成（没有 unmerged 文件）
+          if git diff --staged --quiet && [ -z "$(git ls-files -u)" ]; then
+            # 没有冲突，直接提交推送
+            git diff --staged --quiet || git add index.html
+            if ! git diff --staged --quiet; then
+              git commit -m "🤖 自动更新看板 [$(date -u +'%Y-%m-%d %H:%M UTC')]"
+            fi
+            git push origin main
+          else
+            echo "❌ Rebase conflict, aborting and force pushing local version"
+            git rebase --abort || true
+            git checkout --theirs index.html 2>/dev/null || git checkout index.html
+            git add index.html
+            git commit -m "🤖 自动更新看板 [$(date -u +'%Y-%m-%d %H:%M UTC')]" --allow-empty || true
+            git push origin main --force-with-lease
+          fi
