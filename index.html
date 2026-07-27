@@ -6,7 +6,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#080b12;color:#f0f2f5;font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+body{background:#f5f7fa;color:#111827;font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
 body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(140px);opacity:.06;pointer-events:none;z-index:0}
 body::before{width:600px;height:600px;background:#00d4ff;top:-200px;left:-150px;animation:b1 18s ease-in-out infinite}
 body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;animation:b2 22s ease-in-out infinite;animation-delay:-8s}
@@ -14,15 +14,15 @@ body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;ani
 @keyframes b2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-50px,-20px) scale(1.15)}66%{transform:translate(30px,40px) scale(.85)}}
 .ctn{max-width:1400px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
 .hd{text-align:center;padding:48px 0 36px}
-.hd-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2);font-size:13px;font-weight:600;color:#a855f7;letter-spacing:.05em;margin-bottom:20px}
+.hd-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);font-size:13px;font-weight:600;color:#9333ea;letter-spacing:.05em;margin-bottom:20px}
 .hd-dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:p 2s ease-in-out infinite}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
-.hd h1{font-size:56px;font-weight:900;letter-spacing:-.04em;background:linear-gradient(135deg,#f0f2f5 0%,#a0a8c0 50%,#d0d4e4 100%);-webkit-background-clip:text;-webkit-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.1}
-.hd p{font-size:17px;color:#8b8fa8;max-width:540px;margin:0 auto}
-.hd-meta{display:flex;justify-content:center;gap:32px;margin-top:18px;font-size:14px;color:#5a5f7a}
+.hd h1{font-size:56px;font-weight:900;letter-spacing:-.04em;background:linear-gradient(135deg,#1c1a17 0%,#5a5957 50%,#7e7d7b 100%);-webkit-background-clip:text;-webkit-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.1}
+.hd p{font-size:17px;color:#6b7280;max-width:540px;margin:0 auto}
+.hd-meta{display:flex;justify-content:center;gap:32px;margin-top:18px;font-size:14px;color:#9ca3af}
 
-.card{background:rgba(15,19,30,.95);border:1px solid rgba(255,255,255,.06);border-radius:20px;transition:all .3s;margin-bottom:20px}
-.card:hover{background:rgba(20,25,40,.98);box-shadow:0 0 40px rgba(168,85,247,.08)}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:20px;transition:all .3s;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card:hover{background:#fafbfc;box-shadow:0 4px 16px rgba(168,85,247,.1)}
 
 .bento{display:grid;gap:20px;margin-bottom:20px}
 .bento-3{grid-template-columns:1fr 1fr 1fr}
@@ -35,34 +35,34 @@ body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;ani
 .kpi.k1::before{background:linear-gradient(90deg,#00d4ff,transparent)}
 .kpi.k2::before{background:linear-gradient(90deg,#a855f7,transparent)}
 .kpi.k3::before{background:linear-gradient(90deg,#ec4899,transparent)}
-.kpi-l{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#5a5f7a;margin-bottom:8px}
-.kpi-v{font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;margin-bottom:6px}
-.kpi-u{font-size:20px;font-weight:500;opacity:.5;margin-left:4px}
-.kpi-s{font-size:14px;color:#8b8fa8}
-.kpi-g{position:absolute;top:-30px;right:-20px;width:120px;height:120px;border-radius:50%;filter:blur(45px);opacity:.06}
+.kpi-l{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:8px}
+.kpi-v{font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;margin-bottom:6px;color:#111827}
+.kpi-u{font-size:20px;font-weight:500;opacity:.4;margin-left:4px}
+.kpi-s{font-size:14px;color:#6b7280}
+.kpi-g{position:absolute;top:-30px;right:-20px;width:120px;height:120px;border-radius:50%;filter:blur(45px);opacity:.08}
 .kpi.k1 .kpi-g{background:#00d4ff}.kpi.k2 .kpi-g{background:#a855f7}.kpi.k3 .kpi-g{background:#ec4899}
 
 .cc{padding:28px 32px}
 .cc-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
-.cc-t{font-size:18px;font-weight:700}.cc-s{font-size:13px;color:#5a5f7a;margin-top:3px}
+.cc-t{font-size:18px;font-weight:700;color:#111827}.cc-s{font-size:13px;color:#9ca3af;margin-top:3px}
 
 .pill{display:inline-flex;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.02em}
-.pc{background:rgba(0,212,255,.12);color:#00d4ff}
-.pp{background:rgba(168,85,247,.12);color:#a855f7}
-.pg{background:rgba(16,185,129,.12);color:#10b981}
+.pc{background:rgba(0,212,255,.12);color:#0891b2}
+.pp{background:rgba(168,85,247,.12);color:#9333ea}
+.pg{background:rgba(16,185,129,.12);color:#059669}
 
-.sec-t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
-.sec-s{font-size:14px;color:#5a5f7a;margin-bottom:24px}
+.sec-t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;color:#111827}
+.sec-s{font-size:14px;color:#9ca3af;margin-bottom:24px}
 
 .wc{padding:22px 18px;text-align:center}
 .wc-label{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
-.w1{color:#00d4ff}.w2{color:#10b981}.w3{color:#f59e0b}.w4{color:#ff6020}
-.wc-date{font-size:11px;color:#5a5f7a;margin-bottom:14px}
-.wc-s{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.03)}
-.wc-s .r{color:#8b8fa8;font-weight:500}.wc-s .v{font-weight:700}.wc-s .v.bp{color:#ff6020}
-.wc-em{padding:36px 20px;color:#5a5f7a;font-size:14px}
+.w1{color:#0891b2}.w2{color:#059669}.w3{color:#d97706}.w4{color:#ea580c}
+.wc-date{font-size:11px;color:#9ca3af;margin-bottom:14px}
+.wc-s{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:1px solid #f3f4f6}
+.wc-s .r{color:#6b7280;font-weight:500}.wc-s .v{font-weight:700;color:#111827}.wc-s .v.bp{color:#ea580c}
+.wc-em{padding:36px 20px;color:#9ca3af;font-size:14px}
 
-.ft{text-align:center;padding:36px 0;font-size:13px;color:#5a5f7a;border-top:1px solid rgba(255,255,255,.04)}
+.ft{text-align:center;padding:36px 0;font-size:13px;color:#9ca3af;border-top:1px solid #e5e7eb}
 
 @media(max-width:1100px){.bento-3{grid-template-columns:1fr 1fr}.bento-2{grid-template-columns:1fr}.bento-4{grid-template-columns:repeat(2,1fr)}.hd h1{font-size:40px}}
 @media(max-width:640px){.bento-3{grid-template-columns:1fr}.bento-4{grid-template-columns:1fr}.hd h1{font-size:32px}.kpi-v{font-size:36px}}
@@ -159,7 +159,7 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   var barTotal=Math.min(gap*0.7, nW*24+8), barW=(barTotal-4)/(nW||1);
   var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
   // Grid
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="rgba(255,255,255,0.06)"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#5a5f7a" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
+  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
   // Bars
   bpR.forEach(function(r,ri){
     weeks4.forEach(function(w,wi){
@@ -168,13 +168,13 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
       var bx=L+ri*gap+gap*0.15+wi*(barW+1);
       var by=T+ch-bh;
       h+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" rx="4" fill="'+weekC[wi]+'"><title>'+r+' / '+w.label+'·'+w.month+': '+fmt(v)+' h</title></rect>';
-      if(v>0) h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#f0f2f5" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
+      if(v>0) h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
     });
     // Rotated full label + short below
-    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#a0a4c0" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
+    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#6b7280" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
   });
   // Legend
-  var lx=L; weeks4.forEach(function(w,wi){h+='<rect x="'+lx+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+weekC[wi]+'"/>';h+='<text x="'+(lx+18)+'" y="'+(T-10)+'" font-size="12" fill="#8b8fa8" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';lx+=100});
+  var lx=L; weeks4.forEach(function(w,wi){h+='<rect x="'+lx+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+weekC[wi]+'"/>';h+='<text x="'+(lx+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';lx+=100});
   h+='</svg>';
   document.getElementById('chartWeekly').innerHTML=h;
 })();
@@ -189,9 +189,9 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
   keys.forEach(function(k,i){
     var y=T+i*52, bw=rm[k]/maxR*cw;
-    h+='<text x="'+(L-8)+'" y="'+(y+22)+'" text-anchor="end" font-size="14" fill="#f0f2f5" font-weight="600" font-family="Inter,sans-serif">'+k+'</text>';
+    h+='<text x="'+(L-8)+'" y="'+(y+22)+'" text-anchor="end" font-size="14" fill="#111827" font-weight="600" font-family="Inter,sans-serif">'+k+'</text>';
     h+='<rect x="'+L+'" y="'+(y+8)+'" width="'+bw+'" height="26" rx="7" fill="'+rc[i%rc.length]+'"/>';
-    h+='<text x="'+(L+bw+10)+'" y="'+(y+25)+'" font-size="14" fill="#f0f2f5" font-weight="700" font-family="Inter,sans-serif">'+rm[k]+' 笔 ('+(rm[k]/totalR*100).toFixed(1)+'%)</text>';
+    h+='<text x="'+(L+bw+10)+'" y="'+(y+25)+'" font-size="14" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+rm[k]+' 笔 ('+(rm[k]/totalR*100).toFixed(1)+'%)</text>';
   });
   h+='</svg>';document.getElementById('chartReason').innerHTML=h;
 })();
@@ -203,13 +203,13 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   var W=680, H=340, L=70, R=30, T=30, B=50, cw=W-L-R, ch=H-T-B;
   var pts=totals.map(function(v,i){return{x:L+(i/(totals.length-1))*cw,y:T+ch*(1-v/maxT)}});
   var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="rgba(255,255,255,0.06)"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#5a5f7a" font-family="Inter,sans-serif">'+fmt(maxT*i/4)+'</text>'}
+  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxT*i/4)+'</text>'}
   var d='M'+pts[0].x+','+(T+ch)+' L';pts.forEach(function(p){d+=p.x+','+p.y+' '});d+=pts[pts.length-1].x+','+(T+ch)+' Z';
   h+='<path d="'+d+'" fill="rgba(16,185,129,0.15)"/>';
   var ld='M';pts.forEach(function(p,i){ld+=(i===0?'':'L')+p.x+','+p.y});
   h+='<path d="'+ld+'" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>';
-  pts.forEach(function(p){h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="#10b981" stroke="#080b12" stroke-width="2"/>'});
-  weeks4.forEach(function(w,i){h+='<text x="'+pts[i].x+'" y="'+(H-12)+'" text-anchor="middle" font-size="12" fill="#a0a4c0" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';h+='<text x="'+pts[i].x+'" y="'+(pts[i].y-12)+'" text-anchor="middle" font-size="13" fill="#f0f2f5" font-weight="700" font-family="Inter,sans-serif">'+fmt(totals[i])+'h</text>'});
+  pts.forEach(function(p){h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="#10b981" stroke="#fff" stroke-width="2"/>'});
+  weeks4.forEach(function(w,i){h+='<text x="'+pts[i].x+'" y="'+(H-12)+'" text-anchor="middle" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';h+='<text x="'+pts[i].x+'" y="'+(pts[i].y-12)+'" text-anchor="middle" font-size="13" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(totals[i])+'h</text>'});
   h+='</svg>';document.getElementById('chartTrend').innerHTML=h;
 })();
 
@@ -223,9 +223,9 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
   entries.forEach(function(e,i){
     var y=T+i*52, bw=e.avg/maxA*cw;
-    h+='<text x="'+(L-8)+'" y="'+(y+18)+'" text-anchor="end" font-size="13" fill="#f0f2f5" font-weight="600" font-family="Inter,sans-serif">'+e.r+'</text>';
+    h+='<text x="'+(L-8)+'" y="'+(y+18)+'" text-anchor="end" font-size="13" fill="#111827" font-weight="600" font-family="Inter,sans-serif">'+e.r+'</text>';
     h+='<rect x="'+L+'" y="'+(y+6)+'" width="'+bw+'" height="22" rx="6" fill="'+rc[i%rc.length]+'"/>';
-    h+='<text x="'+(L+bw+8)+'" y="'+(y+21)+'" font-size="13" fill="#f0f2f5" font-weight="700" font-family="Inter,sans-serif">'+e.avg.toFixed(2)+'%</text>';
+    h+='<text x="'+(L+bw+8)+'" y="'+(y+21)+'" font-size="13" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+e.avg.toFixed(2)+'%</text>';
   });
   h+='</svg>';document.getElementById('chartRatio').innerHTML=h;
 })();
@@ -244,7 +244,7 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   var cw=W-L-R, ch=H-T-B, gap=cw/nR;
   var barW=(gap*0.6-4)/2;
   var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="rgba(255,255,255,0.06)"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#5a5f7a" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
+  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
   allR.forEach(function(r,ri){
     months.forEach(function(m,mi){
       var v=(DATA.monthly[m][r]||{}).backpay_hours||0;
@@ -252,13 +252,13 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
       var bx=L+ri*gap+gap*0.2+mi*(barW+2);
       var by=T+ch-bh;
       h+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" rx="4" fill="'+mC[m]+'"><title>'+r+' / '+m+': '+fmt(v)+' h</title></rect>';
-      if(v>0)h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#f0f2f5" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
+      if(v>0)h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
     });
-    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#a0a4c0" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
+    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#6b7280" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
   });
   // Legend
-  h+='<rect x="'+L+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['6月']+'"/><text x="'+(L+18)+'" y="'+(T-10)+'" font-size="12" fill="#8b8fa8" font-family="Inter,sans-serif">6月</text>';
-  h+='<rect x="'+(L+70)+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['7月']+'"/><text x="'+(L+88)+'" y="'+(T-10)+'" font-size="12" fill="#8b8fa8" font-family="Inter,sans-serif">7月</text>';
+  h+='<rect x="'+L+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['6月']+'"/><text x="'+(L+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">6月</text>';
+  h+='<rect x="'+(L+70)+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['7月']+'"/><text x="'+(L+88)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">7月</text>';
   h+='</svg>';document.getElementById('chartMonthly').innerHTML=h;
 })();
 
