@@ -7,15 +7,10 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,7 +38,6 @@ jobs:
           TABLE = "tblWfNL6VuMjKVwG"
           TOKEN = os.environ["LARK_TOKEN"]
 
-          # Fetch all records with offset pagination (base/v3 API)
           all_items = []
           for offset in [0, 20, 40, 60, 80, 100]:
               url = f"https://open.feishu.cn/open-apis/base/v3/bases/{BASE}/tables/{TABLE}/records?page_size=20&offset={offset}"
@@ -54,11 +48,9 @@ jobs:
                   break
               items = resp["data"]["records"]
               print(f"  offset={offset}: {len(items)} records")
-              if not items:
-                  break
+              if not items: break
               all_items.extend(items)
-              if not resp["data"].get("has_more"):
-                  break
+              if not resp["data"].get("has_more"): break
 
           print(f"Total records: {len(all_items)}")
 
@@ -68,7 +60,6 @@ jobs:
               if s in ('', '-'): return 0.0
               return float(s.replace(',', ''))
 
-          # Map field names from records to positional arrays
           FIELD_ORDER = [
               '周期','月份','未及时录入指纹','打卡机/系统故障 (1)',
               '大区','补发工时/h','本期实发工时/h','本期应发工时/h',
@@ -77,12 +68,8 @@ jobs:
               '出错占比率','员工漏打卡',
               '考勤专员数据差异 (1)','考勤专员数据差异'
           ]
-          rows = []
-          for r in all_items:
-              f = r.get('fields', {})
-              rows.append([f.get(k) for k in FIELD_ORDER])
+          rows = [[r['fields'].get(k) for k in FIELD_ORDER] for r in all_items]
 
-          # Build DATA structure
           wk_keys = []
           for r in rows:
               dr = (r[11] or '').strip()
@@ -109,7 +96,6 @@ jobs:
                   regs[rg] = {'actual_hours':pv(r[6]),'due_hours':pv(r[7]),'backpay_hours':bp,'error_ratio':ratio,'reasons':reasons}
               weeks.append({'label':period,'month':month,'date_range':wk,'regions':regs})
 
-          # Monthly aggregates
           monthly = {}
           for w in weeks:
               m = w['month']
@@ -133,15 +119,13 @@ jobs:
                   d2['error_ratio'] = round(d2['backpay_hours']/d2['due_hours']*100,2) if d2['due_hours']>0 else 0
 
           data = {'weeks':weeks,'monthly':monthly,'regions':sorted(regions_set)}
-
-          # Update index.html
           with open('index.html','r',encoding='utf-8') as f: html = f.read()
           new_html = re.sub(r'var DATA = \{.*?\};', f'var DATA = {json.dumps(data,ensure_ascii=False)};', html, count=1, flags=re.DOTALL)
           with open('index.html','w',encoding='utf-8') as f: f.write(new_html)
 
           tc = sum(sum(rs['count'] for rs in d['reasons']) for w in weeks for d in w['regions'].values())
           tb = sum(d['backpay_hours'] for w in weeks for d in w['regions'].values())
-          print(f'::notice title=Summary::Records:{len(rows)} Weeks:{len(weeks)} Corrections:{tc} Backpay:{tb:.1f}h')
+          print(f'Summary: {len(rows)} records, {len(weeks)} weeks, {tc} corrections, {tb:.1f}h backpay')
           PYEOF
 
       - name: Commit and Push
@@ -154,8 +138,5 @@ jobs:
           else
             git commit -m "🔄 手动刷新看板 [$(date +%Y-%m-%d)]"
             git push
+            echo "Pushed! GitHub Pages will auto-deploy."
           fi
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-        id: deployment
