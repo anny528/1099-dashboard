@@ -39,18 +39,22 @@ jobs:
           TOKEN = os.environ["LARK_TOKEN"]
 
           all_items = []
-          for offset in [0, 20, 40, 60, 80, 100]:
-              url = f"https://open.feishu.cn/open-apis/base/v3/bases/{BASE}/tables/{TABLE}/records?page_size=20&offset={offset}"
+          page_token = None
+          while True:
+              url = f"https://open.feishu.cn/open-apis/bitable/v1/apps/{BASE}/tables/{TABLE}/records?page_size=20"
+              if page_token:
+                  url += f"&page_token={page_token}"
               req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}"})
               resp = json.loads(urllib.request.urlopen(req).read())
               if resp.get("code") != 0:
-                  print(f"API error at offset {offset}: {resp.get('msg')}")
+                  print(f"API error: code={resp.get('code')}, msg={resp.get('msg')}")
                   break
-              items = resp["data"]["records"]
-              print(f"  offset={offset}: {len(items)} records")
-              if not items: break
+              items = resp["data"]["items"]
+              print(f"  page: {len(items)} records (total so far: {len(all_items)+len(items)})")
               all_items.extend(items)
-              if not resp["data"].get("has_more"): break
+              if not resp["data"].get("has_more"):
+                  break
+              page_token = resp["data"].get("page_token")
 
           print(f"Total records: {len(all_items)}")
 
