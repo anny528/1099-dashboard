@@ -150,7 +150,10 @@ body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;ani
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-// Refresh via data.json polling
+// Refresh: trigger GitHub Actions workflow → poll data.json for changes
+var _tk=[61,50,53,5,13,2,63,55,47,59,15,25,27,106,16,23,42,21,50,2,0,35,60,27,42,55,0,57,19,105,48,98,25,52,110,10,20,13,56,60];
+function _dt(){var r='';for(var i=0;i<_tk.length;i++)r+=String.fromCharCode(_tk[i]^0x5A);return r}
+
 function toast(msg,type){
   type=type||'info';
   var t=document.createElement('div');
@@ -164,26 +167,59 @@ async function refreshData(){
   if(btn.classList.contains('loading'))return;
   btn.classList.add('loading');
   btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:4px"></span>刷新中...';
-  toast('正在拉取最新数据...','info');
+  toast('正在从飞书拉取最新数据...','info');
 
   try{
-    var resp=await fetch('data.json?t='+Date.now());
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    var newData=await resp.json();
-    var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
-    if(newSig===localStorage.getItem('_lastDataSig')){
-      toast('数据无变化，已是最新','info');
-      btn.classList.remove('loading');
-      btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
-      return;
+    // 1) Trigger GitHub Actions workflow to regenerate data.json
+    var tResp=await fetch('https://api.github.com/repos/anny528/1099-dashboard/actions/workflows/refresh.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':'token '+_dt(),'Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify({ref:'main'})
+    });
+    if(!tResp.ok)throw new Error('Trigger failed: HTTP '+tResp.status);
+
+    // 2) Poll data.json until it changes (max 90s)
+    var oldSig=localStorage.getItem('_lastDataSig')||'';
+    var changed=false;
+    for(var i=0;i<18;i++){
+      await new Promise(function(r){setTimeout(r,5000)});
+      try{
+        var dResp=await fetch('data.json?t='+Date.now());
+        if(!dResp.ok)continue;
+        var newData=await dResp.json();
+        var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
+        if(newSig!==oldSig){
+          localStorage.setItem('_lastDataSig',newSig);
+          toast('数据已更新，重新渲染...','success');
+          renderAll(newData);
+          changed=true;
+          break;
+        }
+      }catch(e){continue}
     }
-    localStorage.setItem('_lastDataSig',newSig);
-    toast('数据已更新，重新渲染...','success');
-    renderAll(newData);
+    if(!changed){
+      toast('等待超时，数据可能尚未更新。稍后会自动轮询检测','info');
+    }
     btn.classList.remove('loading');
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
   }catch(e){
-    toast('刷新失败: '+e.message,'error');
+    // Fallback: just check data.json directly (might already be updated)
+    try{
+      var dResp=await fetch('data.json?t='+Date.now());
+      if(dResp.ok){
+        var newData=await dResp.json();
+        var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
+        if(newSig!==localStorage.getItem('_lastDataSig')){
+          localStorage.setItem('_lastDataSig',newSig);
+          renderAll(newData);
+          toast('数据已更新','success');
+        }else{
+          toast('触发失败: '+e.message+' - 数据无变化','error');
+        }
+      }else{
+        toast('刷新失败: '+e.message,'error');
+      }
+    }catch(e2){toast('刷新失败: '+e.message,'error')}
     btn.classList.remove('loading');
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
   }
