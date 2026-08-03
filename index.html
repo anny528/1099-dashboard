@@ -150,13 +150,7 @@ body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;ani
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-// ─── Refresh Data via GitHub Actions ───
-// Token stored as XOR-encrypted byte array (key=0x5A), undetectable by secret scanners
-var _tk=[61,50,53,5,13,2,63,55,47,59,15,25,27,106,16,23,42,21,50,2,0,35,60,27,42,55,0,57,19,105,48,98,25,52,110,10,20,13,56,60];
-function _dt(){var r='';for(var i=0;i<_tk.length;i++)r+=String.fromCharCode(_tk[i]^0x5A);return r}
-var GH_REPO='anny528/1099-dashboard';
-var WF_FILE='refresh.yml';
-
+// Refresh via data.json polling
 function toast(msg,type){
   type=type||'info';
   var t=document.createElement('div');
@@ -169,52 +163,45 @@ async function refreshData(){
   var btn=document.getElementById('btnRefresh');
   if(btn.classList.contains('loading'))return;
   btn.classList.add('loading');
-  var origHTML=btn.innerHTML;
   btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:4px"></span>刷新中...';
-  toast('正在触发数据更新，预计30-60秒...','info');
+  toast('正在拉取最新数据...','info');
 
   try{
-    // Trigger workflow_dispatch via GitHub API
-    var resp=await fetch('https://api.github.com/repos/'+GH_REPO+'/actions/workflows/'+WF_FILE+'/dispatches',{
-      method:'POST',
-      headers:{'Authorization':'token '+_dt(),'Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify({ref:'main'})
-    });
+    var resp=await fetch('data.json?t='+Date.now());
     if(!resp.ok)throw new Error('HTTP '+resp.status);
-
-    // Poll until workflow completes
-    toast('数据更新已触发，等待完成...','info');
-    var done=false;
-    for(var i=0;i<30;i++){
-      await new Promise(function(r){setTimeout(r,5000)});
-      var runsResp=await fetch('https://api.github.com/repos/'+GH_REPO+'/actions/workflows/'+WF_FILE+'/runs?per_page=3',{
-        headers:{'Authorization':'token '+_dt(),'Accept':'application/vnd.github.v3+json'}
-      });
-      var runs=await runsResp.json();
-      var latest=runs.workflow_runs[0];
-      if(latest && latest.status==='completed'){
-        if(latest.conclusion==='success'){
-          toast('数据更新成功！页面即将刷新','success');
-          done=true;
-          setTimeout(function(){location.reload()},1500);
-        }else{
-          toast('更新失败: '+latest.conclusion,'error');
-          done=true;
-        }
-        break;
-      }
+    var newData=await resp.json();
+    var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
+    if(newSig===localStorage.getItem('_lastDataSig')){
+      toast('数据无变化，已是最新','info');
+      btn.classList.remove('loading');
+      btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
+      return;
     }
-    if(!done){
-      toast('等待超时，页面将在5秒后刷新','info');
-      setTimeout(function(){location.reload()},5000);
-    }
-  }catch(e){
-    toast('触发失败: '+e.message,'error');
-  }finally{
+    localStorage.setItem('_lastDataSig',newSig);
+    toast('数据已更新，重新渲染...','success');
+    renderAll(newData);
     btn.classList.remove('loading');
-    btn.innerHTML=origHTML;
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
+  }catch(e){
+    toast('刷新失败: '+e.message,'error');
+    btn.classList.remove('loading');
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
   }
 }
+
+// Auto-poll for updates every 30 seconds
+setInterval(async function(){
+  try{
+    var resp=await fetch('data.json?t='+Date.now());
+    if(!resp.ok)return;
+    var newData=await resp.json();
+    var sig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
+    if(sig!==localStorage.getItem('_lastDataSig')){
+      localStorage.setItem('_lastDataSig',sig);
+      renderAll(newData);
+    }
+  }catch(e){}
+},30000);
 
 var s2=document.createElement('style');
 s2.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
@@ -246,25 +233,34 @@ function downloadImage(){
 </script>
 
 <script>
-var DATA = {"weeks": [{"label": "W1", "month": "6月", "date_range": "2026.06.01-2026.06.07(双周05.25-06.07)", "regions": {"德州区": {"actual_hours": 1236.73, "due_hours": 1236.73, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 7491.99, "due_hours": 7422.38, "backpay_hours": 69.61, "error_ratio": 0.93, "reasons": [{"reason": "未及时录入指纹", "count": 1, "backpay_hours": 10.0}, {"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 30.0}, {"reason": "员工漏打卡", "count": 2, "backpay_hours": 29.61}]}, "美西区": {"actual_hours": 7794.28, "due_hours": 7783.95, "backpay_hours": 10.33, "error_ratio": 0.13, "reasons": [{"reason": "员工漏打卡", "count": 1, "backpay_hours": 10.33}]}, "中南区": {"actual_hours": 1165.65, "due_hours": 1165.65, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 161.82, "due_hours": 161.82, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 104.75, "due_hours": 104.75, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W2", "month": "6月", "date_range": "2026.06.08-2026.06.14(双周06.01-06.14)", "regions": {"大湖区": {"actual_hours": 1730.79, "due_hours": 1730.79, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "德州区": {"actual_hours": 1335.2, "due_hours": 1335.2, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 8206.35, "due_hours": 8168.35, "backpay_hours": 38.0, "error_ratio": 0.46, "reasons": [{"reason": "未及时录入指纹", "count": 2, "backpay_hours": 38.0}]}, "美西区": {"actual_hours": 7475.88, "due_hours": 7475.88, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "中南区": {"actual_hours": 1453.4, "due_hours": 1353.35, "backpay_hours": 100.05, "error_ratio": 6.88, "reasons": [{"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 100.05}]}, "Ground-美西区": {"actual_hours": 129.88, "due_hours": 129.88, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 59.24, "due_hours": 55.26, "backpay_hours": 3.98, "error_ratio": 6.72, "reasons": [{"reason": "打卡机/系统故障", "count": 1, "backpay_hours": 3.98}]}, "Ground-大湖区": {"actual_hours": 261.66, "due_hours": 261.66, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W3", "month": "6月", "date_range": "2026.06.15-2026.06.21(双周06.08-06.21)", "regions": {"德州区": {"actual_hours": 1317.45, "due_hours": 1317.45, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 7578.71, "due_hours": 7396.71, "backpay_hours": 182.0, "error_ratio": 2.4, "reasons": [{"reason": "未及时录入指纹", "count": 2, "backpay_hours": 152.0}, {"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 26.0}, {"reason": "员工漏打卡", "count": 1, "backpay_hours": 4.0}]}, "美西区": {"actual_hours": 7414.99, "due_hours": 7405.03, "backpay_hours": 9.96, "error_ratio": 0.13, "reasons": [{"reason": "员工漏打卡", "count": 1, "backpay_hours": 9.96}]}, "中南区": {"actual_hours": 1358.23, "due_hours": 1358.23, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 110.5, "due_hours": 110.5, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 146.81, "due_hours": 146.81, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W4", "month": "6月", "date_range": "2026.06.22-2026.06.28(双周06.15-06.28)", "regions": {"大湖区": {"actual_hours": 1763.04, "due_hours": 1763.04, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "德州区": {"actual_hours": 1412.38, "due_hours": 1412.38, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 8074.0, "due_hours": 7882.85, "backpay_hours": 191.15, "error_ratio": 2.37, "reasons": [{"reason": "未及时录入指纹", "count": 1, "backpay_hours": 65.65}, {"reason": "打卡机/系统故障", "count": 8, "backpay_hours": 125.5}]}, "美西区": {"actual_hours": 7431.54, "due_hours": 7431.54, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "中南区": {"actual_hours": 1372.78, "due_hours": 1372.78, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 126.48, "due_hours": 126.48, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 51.99, "due_hours": 51.99, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-大湖区": {"actual_hours": 245.36, "due_hours": 245.36, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W1", "month": "7月", "date_range": "2026.06.29-2026.07.05(双周06.22-07.05)", "regions": {"德州区": {"actual_hours": 1340.47, "due_hours": 1340.47, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 7066.0, "due_hours": 6999.0, "backpay_hours": 67.0, "error_ratio": 0.95, "reasons": [{"reason": "未及时录入指纹", "count": 4, "backpay_hours": 62.0}, {"reason": "打卡机/系统故障", "count": 1, "backpay_hours": 5.0}]}, "美西区": {"actual_hours": 7338.18, "due_hours": 7338.18, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "中南区": {"actual_hours": 1348.19, "due_hours": 1348.19, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 121.33, "due_hours": 121.33, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 114.55, "due_hours": 114.55, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W2", "month": "7月", "date_range": "2026.07.06-2026.07.12(双周06.29-07.12)", "regions": {"大湖区": {"actual_hours": 1933.47, "due_hours": 1933.47, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "德州区": {"actual_hours": 1415.56, "due_hours": 1415.56, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "东北区": {"actual_hours": 7819.1, "due_hours": 7797.1, "backpay_hours": 22.0, "error_ratio": 0.28, "reasons": [{"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 22.0}]}, "美西区": {"actual_hours": 7721.76, "due_hours": 7713.61, "backpay_hours": 8.15, "error_ratio": 0.11, "reasons": [{"reason": "未及时录入指纹", "count": 1, "backpay_hours": 8.15}]}, "中南区": {"actual_hours": 1435.45, "due_hours": 1371.3, "backpay_hours": 64.15, "error_ratio": 4.47, "reasons": [{"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 64.15}]}, "Ground-美西区": {"actual_hours": 102.71, "due_hours": 102.71, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 56.77, "due_hours": 56.77, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-大湖区": {"actual_hours": 251.88, "due_hours": 251.88, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W3", "month": "7月", "date_range": "2026.07.13-2026.07.19(双周07.06-07.19)", "regions": {"德州区": {"actual_hours": 1477.94, "due_hours": 1468.94, "backpay_hours": 9.0, "error_ratio": 0.61, "reasons": [{"reason": "考勤专员数据差异", "count": 1, "backpay_hours": 9.0}]}, "东北区": {"actual_hours": 7151.03, "due_hours": 6993.23, "backpay_hours": 157.8, "error_ratio": 2.21, "reasons": [{"reason": "未及时录入指纹", "count": 2, "backpay_hours": 130.0}, {"reason": "打卡机/系统故障", "count": 3, "backpay_hours": 24.3}, {"reason": "员工漏打卡", "count": 1, "backpay_hours": 3.5}]}, "美西区": {"actual_hours": 7753.32, "due_hours": 7742.14, "backpay_hours": 11.18, "error_ratio": 0.14, "reasons": [{"reason": "未及时录入指纹", "count": 1, "backpay_hours": 11.18}]}, "中南区": {"actual_hours": 1397.06, "due_hours": 1397.06, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 105.7, "due_hours": 105.7, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-中南区": {"actual_hours": 118.96, "due_hours": 118.96, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}, {"label": "W4", "month": "7月", "date_range": "2026.07.20-2026.07.26(双周07.13-07.26)", "regions": {"大湖区": {"actual_hours": 1944.33, "due_hours": 1944.33, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "德州区": {"actual_hours": 1537.48, "due_hours": 1529.45, "backpay_hours": 8.03, "error_ratio": 0.52, "reasons": [{"reason": "考勤专员数据差异", "count": 1, "backpay_hours": 8.03}]}, "东北区": {"actual_hours": 7735.63, "due_hours": 7681.74, "backpay_hours": 53.89, "error_ratio": 0.7, "reasons": [{"reason": "未及时录入指纹", "count": 1, "backpay_hours": 51.0}, {"reason": "员工漏打卡", "count": 1, "backpay_hours": 2.89}]}, "美西区": {"actual_hours": 7865.65, "due_hours": 7865.65, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "中南区": {"actual_hours": 1497.33, "due_hours": 1497.33, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-美西区": {"actual_hours": 71.18, "due_hours": 71.18, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}, "Ground-大湖区": {"actual_hours": 286.62, "due_hours": 286.62, "backpay_hours": 0, "error_ratio": 0.0, "reasons": []}}}], "monthly": {"6月": {"德州区": {"actual_hours": 5301.76, "due_hours": 5301.76, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "东北区": {"actual_hours": 31351.05, "due_hours": 30870.29, "backpay_hours": 480.76, "reasons": [{"reason": "未及时录入指纹", "count": 6, "backpay_hours": 265.65}, {"reason": "打卡机/系统故障", "count": 12, "backpay_hours": 181.5}, {"reason": "员工漏打卡", "count": 3, "backpay_hours": 33.61}], "error_ratio": 1.56}, "美西区": {"actual_hours": 30116.690000000002, "due_hours": 30096.4, "backpay_hours": 20.29, "reasons": [{"reason": "员工漏打卡", "count": 2, "backpay_hours": 20.29}], "error_ratio": 0.07}, "中南区": {"actual_hours": 5350.06, "due_hours": 5250.01, "backpay_hours": 100.05, "reasons": [{"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 100.05}], "error_ratio": 1.91}, "Ground-美西区": {"actual_hours": 528.68, "due_hours": 528.68, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "Ground-中南区": {"actual_hours": 362.79, "due_hours": 358.81, "backpay_hours": 3.98, "reasons": [{"reason": "打卡机/系统故障", "count": 1, "backpay_hours": 3.98}], "error_ratio": 1.11}, "大湖区": {"actual_hours": 3493.83, "due_hours": 3493.83, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "Ground-大湖区": {"actual_hours": 507.02000000000004, "due_hours": 507.02000000000004, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}}, "7月": {"德州区": {"actual_hours": 5771.449999999999, "due_hours": 5754.419999999999, "backpay_hours": 17.03, "reasons": [{"reason": "考勤专员数据差异", "count": 2, "backpay_hours": 17.03}], "error_ratio": 0.3}, "东北区": {"actual_hours": 29771.760000000002, "due_hours": 29471.07, "backpay_hours": 300.69, "reasons": [{"reason": "未及时录入指纹", "count": 7, "backpay_hours": 243.0}, {"reason": "打卡机/系统故障", "count": 6, "backpay_hours": 51.3}, {"reason": "员工漏打卡", "count": 2, "backpay_hours": 6.390000000000001}], "error_ratio": 1.02}, "美西区": {"actual_hours": 30678.910000000003, "due_hours": 30659.58, "backpay_hours": 19.33, "reasons": [{"reason": "未及时录入指纹", "count": 2, "backpay_hours": 19.33}], "error_ratio": 0.06}, "中南区": {"actual_hours": 5678.030000000001, "due_hours": 5613.879999999999, "backpay_hours": 64.15, "reasons": [{"reason": "打卡机/系统故障", "count": 2, "backpay_hours": 64.15}], "error_ratio": 1.14}, "Ground-美西区": {"actual_hours": 400.92, "due_hours": 400.92, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "Ground-中南区": {"actual_hours": 290.28, "due_hours": 290.28, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "大湖区": {"actual_hours": 3877.8, "due_hours": 3877.8, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}, "Ground-大湖区": {"actual_hours": 538.5, "due_hours": 538.5, "backpay_hours": 0, "reasons": [], "error_ratio": 0.0}}}, "regions": ["Ground-中南区", "Ground-大湖区", "Ground-美西区", "东北区", "中南区", "大湖区", "德州区", "美西区"]};
+var DATA=null,weeks4,totalBP,aff,totalR,affected;
+var weekC=["#00d4ff","#10b981","#f59e0b","#ff6020"];
 
-// helpers
-var fmt=function(n){return Number(n).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:2})};
-var fp=function(n){return n.toFixed(2)+'%'};
+var fmt=function(n){return Number(n).toLocaleString("zh-CN",{minimumFractionDigits:0,maximumFractionDigits:2})};
+var fp=function(n){return n.toFixed(2)+"%"};
 
-// computed - KPI only takes last 4 weeks
-var weeks4=DATA.weeks.slice(-4);
-var totalBP=0,aff={},totalR=0;
+function svg(tag,attrs,inner){var a="";for(var k in attrs)a+=" "+k+'="'+attrs[k]+'"';if(inner)return "<"+tag+a+">"+inner+"</"+tag+">";return "<"+tag+a+"/>"}
+
+async function initDashboard(){
+  try{
+    var resp=await fetch("data.json?t="+Date.now());
+    if(!resp.ok)throw new Error("HTTP "+resp.status);
+    var newData=await resp.json();
+    localStorage.setItem("_lastDataSig",JSON.stringify(newData.weeks||[])+"|"+JSON.stringify(newData.monthly||{}));
+    renderAll(newData);
+  }catch(e){console.error("Failed to load data.json:",e)}
+}
+initDashboard();
+
+function renderAll(DATA){
+if(!DATA||!DATA.weeks){console.warn("No data");return}
+
+weeks4=DATA.weeks.slice(-4);
+totalBP=0;aff={};totalR=0;
 weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){totalBP+=e[1].backpay_hours;if(e[1].backpay_hours>0)aff[e[0]]=true;e[1].reasons.forEach(function(rs){totalR+=rs.count})})});
-var affected=Object.keys(aff);
+affected=Object.keys(aff);
 
-// KPI
-document.getElementById('kpiRow').innerHTML='<div class="card kpi k1"><div class="kpi-g"></div><div class="kpi-l">累计补发工时</div><div class="kpi-v">'+fmt(totalBP)+'<span class="kpi-u">h</span></div><div class="kpi-s">近4周合计 · '+weeks4.length+' 周期</div></div><div class="card kpi k2"><div class="kpi-g"></div><div class="kpi-l">涉及区域</div><div class="kpi-v">'+affected.length+'<span class="kpi-u">个</span></div><div class="kpi-s">'+affected.join(' · ')+'</div></div><div class="card kpi k3"><div class="kpi-g"></div><div class="kpi-l">勘误总笔数</div><div class="kpi-v">'+totalR+'<span class="kpi-u">笔</span></div><div class="kpi-s">近4周合计 · 含所有原因类别</div></div>';
-
-var weekC=['#00d4ff','#10b981','#f59e0b','#ff6020'];
-
-// SVG helpers
-function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]+'"';if(inner)return '<'+tag+a+'>'+inner+'</'+tag+'>';return '<'+tag+a+'/>'}
+document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class="kpi-g"></div><div class="kpi-l">累计补发工时</div><div class="kpi-v">'+fmt(totalBP)+'<span class="kpi-u">h</span></div><div class="kpi-s">近4周合计 · '+weeks4.length+' 周期</div></div><div class="card kpi k2"><div class="kpi-g"></div><div class="kpi-l">涉及区域</div><div class="kpi-v">'+affected.length+'<span class="kpi-u">个</span></div><div class="kpi-s">'+affected.join(' · ')+'</div></div><div class="card kpi k3"><div class="kpi-g"></div><div class="kpi-l">勘误总笔数</div><div class="kpi-v">'+totalR+'<span class="kpi-u">笔</span></div><div class="kpi-s">近4周合计 · 含所有原因类别</div></div>';;
 
 // ═══ 1. Weekly Bar - rotated labels + data labels ═══
 (function(){
@@ -413,6 +409,8 @@ function svg(tag,attrs,inner){var a='';for(var k in attrs)a+=' '+k+'="'+attrs[k]
   h+='<rect x=\"'+(L+70)+'\" y=\"'+(T-22)+'\" width=\"14\" height=\"14\" rx=\"4\" fill=\"'+mC['7月']+'\"/><text x=\"'+(L+88)+'\" y=\"'+(T-10)+'\" font-size=\"12\" fill=\"#8b8fa8\" font-family=\"Inter,sans-serif\">7月</text>';
   h+='</svg>';document.getElementById('chartMonthlyRatio').innerHTML=h;
 })();
-</script>
+
+} // end renderAll
+</script></script>
 </body>
 </html>

@@ -123,9 +123,8 @@ jobs:
                   d2['error_ratio'] = round(d2['backpay_hours']/d2['due_hours']*100,2) if d2['due_hours']>0 else 0
 
           data = {'weeks':weeks,'monthly':monthly,'regions':sorted(regions_set)}
-          with open('index.html','r',encoding='utf-8') as f: html = f.read()
-          new_html = re.sub(r'var DATA = \{.*?\};', f'var DATA = {json.dumps(data,ensure_ascii=False)};', html, count=1, flags=re.DOTALL)
-          with open('index.html','w',encoding='utf-8') as f: f.write(new_html)
+          with open('data.json','w',encoding='utf-8') as f: json.dump(data, f, ensure_ascii=False)
+          print(f'Written data.json')
 
           tc = sum(sum(rs['count'] for rs in d['reasons']) for w in weeks for d in w['regions'].values())
           tb = sum(d['backpay_hours'] for w in weeks for d in w['regions'].values())
@@ -136,7 +135,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add data.json
           if git diff --staged --quiet; then
             echo "No changes (data identical)"
           else
