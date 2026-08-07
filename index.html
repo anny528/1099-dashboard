@@ -296,8 +296,8 @@ totalBP=0;aff={};totalR=0;
 weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){totalBP+=e[1].backpay_hours;if(e[1].backpay_hours>0)aff[e[0]]=true;e[1].reasons.forEach(function(rs){totalR+=rs.count})})});
 affected=Object.keys(aff);
 
-// Dynamic date range from DATA
-var allMonths=Object.keys(DATA.monthly||{}).sort();
+// Dynamic date range from DATA (exclude months with 0 records or empty)
+var allMonths=Object.keys(DATA.monthly||{}).filter(function(m){return Object.keys(DATA.monthly[m]||{}).length>0}).sort();
 var hdEl=document.getElementById('hdDateRange');
 if(hdEl&&allMonths.length){hdEl.textContent='● '+allMonths[0]+'–'+allMonths[allMonths.length-1]+'数据'}
 

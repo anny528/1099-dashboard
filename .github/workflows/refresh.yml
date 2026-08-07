@@ -73,6 +73,8 @@ jobs:
               '考勤专员数据差异 (1)','考勤专员数据差异'
           ]
           rows = [[r['fields'].get(k) for k in FIELD_ORDER] for r in all_items]
+          # Skip 6月 (historical data; dashboard focuses on 7月+)
+          rows = [r for r in rows if (r[1] or '').strip() != '6月']
 
           wk_keys = []
           for r in rows:
