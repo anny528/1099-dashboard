@@ -392,7 +392,8 @@ document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class
 (function(){
   var months=Object.keys(DATA.monthly), allR=[];
   months.forEach(function(m){Object.keys(DATA.monthly[m]).forEach(function(r){if(allR.indexOf(r)<0&&DATA.monthly[m][r].backpay_hours>0)allR.push(r)})});
-  var mC={'6月':'#a855f7','7月':'#00d4ff'};
+  var monthColors=['#a855f7','#00d4ff','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
+  var mC={};months.forEach(function(m,i){mC[m]=monthColors[i%monthColors.length]});
   var maxV=0;months.forEach(function(m){allR.forEach(function(r){var v=(DATA.monthly[m][r]||{}).backpay_hours||0;if(v>maxV)maxV=v})});
   maxV=Math.ceil(maxV/50)*50+50;
   var nR=allR.length, W=Math.max(680,nR*100+80), H=420, T=40, B=110, L=72, R=30;
@@ -412,8 +413,7 @@ document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class
     h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#6b7280" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
   });
   // Legend
-  h+='<rect x="'+L+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['6月']+'"/><text x="'+(L+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">6月</text>';
-  h+='<rect x="'+(L+70)+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC['7月']+'"/><text x="'+(L+88)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">7月</text>';
+  months.forEach(function(m,mi){var lxx=L+mi*70;h+='<rect x="'+lxx+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC[m]+'"/><text x="'+(lxx+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+m+'</text>';});
   h+='</svg>';document.getElementById('chartMonthly').innerHTML=h;
 })();
 
@@ -421,7 +421,8 @@ document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class
 (function(){
   var months=Object.keys(DATA.monthly), allR=[];
   months.forEach(function(m){Object.keys(DATA.monthly[m]).forEach(function(r){if(allR.indexOf(r)<0&&DATA.monthly[m][r].error_ratio>0)allR.push(r)})});
-  var mC={'6月':'#a855f7','7月':'#00d4ff'};
+  var monthColors=['#a855f7','#00d4ff','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
+  var mC={};months.forEach(function(m,i){mC[m]=monthColors[i%monthColors.length]});
   var maxV=0;months.forEach(function(m){allR.forEach(function(r){var v=(DATA.monthly[m][r]||{}).error_ratio||0;if(v>maxV)maxV=v})});
   maxV=Math.ceil(maxV/0.5)*0.5+0.5;
   var nR=allR.length, W=Math.max(680,nR*120+80), H=400, T=35, B=100, L=70, R=30;
@@ -446,8 +447,7 @@ document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class
     h+='<text x=\"'+(L+ri*gap+gap/2)+'\" y=\"'+(H-30)+'\" text-anchor=\"middle\" font-size=\"13\" fill=\"#a0a4c0\" font-weight=\"600\" font-family=\"Inter,sans-serif\" transform=\"rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')\">'+r+'</text>';
   });
   // Legend
-  h+='<rect x=\"'+L+'\" y=\"'+(T-22)+'\" width=\"14\" height=\"14\" rx=\"4\" fill=\"'+mC['6月']+'\"/><text x=\"'+(L+18)+'\" y=\"'+(T-10)+'\" font-size=\"12\" fill=\"#8b8fa8\" font-family=\"Inter,sans-serif\">6月</text>';
-  h+='<rect x=\"'+(L+70)+'\" y=\"'+(T-22)+'\" width=\"14\" height=\"14\" rx=\"4\" fill=\"'+mC['7月']+'\"/><text x=\"'+(L+88)+'\" y=\"'+(T-10)+'\" font-size=\"12\" fill=\"#8b8fa8\" font-family=\"Inter,sans-serif\">7月</text>';
+  months.forEach(function(m,mi){var lxx=L+mi*70;h+='<rect x=\"'+lxx+'\" y=\"'+(T-22)+'\" width=\"14\" height=\"14\" rx=\"4\" fill=\"'+mC[m]+'\"/><text x=\"'+(lxx+18)+'\" y=\"'+(T-10)+'\" font-size=\"12\" fill=\"#8b8fa8\" font-family=\"Inter,sans-serif\">'+m+'</text>';});
   h+='</svg>';document.getElementById('chartMonthlyRatio').innerHTML=h;
 })();
 
