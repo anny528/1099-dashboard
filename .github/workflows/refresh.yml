@@ -77,21 +77,25 @@ jobs:
           wk_keys = []
           for r in rows:
               dr = (r[11] or '').strip()
-              if dr and dr not in wk_keys: wk_keys.append(dr)
+              mo = (r[1] or '').strip()
+              key = (dr, mo)
+              if dr and key not in wk_keys: wk_keys.append(key)
 
           weeks = []
+          period_by_month = {}  # track auto-generated labels per month
           regions_set = set()
-          for wk in wk_keys:
-              wk_rows = [r for r in rows if (r[11] or '').strip() == wk]
-              # Period: use existing label if any record has one, else auto-generate
+          for (wk, mo) in wk_keys:
+              wk_rows = [r for r in rows if (r[11] or '').strip() == wk and (r[1] or '').strip() == mo]
+              # Period: use existing label, else auto-generate per-month sequence
               wk_periods = set((r[0] or '').strip() for r in wk_rows if (r[0] or '').strip())
-              period = sorted(wk_periods)[0] if wk_periods else f'W{len(weeks)+1}'
-              # Month: use most common month in the week
-              month_counts = {}
-              for r in wk_rows:
-                  m = (r[1] or '').strip()
-                  if m: month_counts[m] = month_counts.get(m, 0) + 1
-              month = max(month_counts, key=month_counts.get) if month_counts else (wk_rows[0][1] or '').strip()
+              if wk_periods:
+                  period = sorted(wk_periods)[0]
+                  period_by_month[mo] = max(period_by_month.get(mo, 0), int(period[1:]) if period.startswith('W') and len(period) > 1 and period[1:].isdigit() else 1)
+              else:
+                  n = period_by_month.get(mo, 0) + 1
+                  period = f'W{n}'
+                  period_by_month[mo] = n
+              month = mo
               regs = {}
               for r in wk_rows:
                   rg = (r[4] or '').strip()
