@@ -96,7 +96,7 @@ body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;ani
 </div>
 <h1>1099 薪资勘误看板</h1>
 <p>各区域每周工时补发追踪 · 近4周滚动更新 · 月度累计含全部周期</p>
-<div class="hd-meta"><span>● 6月–7月数据</span><span>● 飞书多维表格 · 1099薪资勘误数据</span></div>
+<div class="hd-meta"><span id="hdDateRange">● 6月–7月数据</span><span>● 飞书多维表格 · 1099薪资勘误数据</span></div>
 </header>
 
 <!-- KPI -->
@@ -295,6 +295,11 @@ weeks4=DATA.weeks.slice(-4);
 totalBP=0;aff={};totalR=0;
 weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){totalBP+=e[1].backpay_hours;if(e[1].backpay_hours>0)aff[e[0]]=true;e[1].reasons.forEach(function(rs){totalR+=rs.count})})});
 affected=Object.keys(aff);
+
+// Dynamic date range from DATA
+var allMonths=Object.keys(DATA.monthly||{}).sort();
+var hdEl=document.getElementById('hdDateRange');
+if(hdEl&&allMonths.length){hdEl.textContent='● '+allMonths[0]+'–'+allMonths[allMonths.length-1]+'数据'}
 
 document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class="kpi-g"></div><div class="kpi-l">累计补发工时</div><div class="kpi-v">'+fmt(totalBP)+'<span class="kpi-u">h</span></div><div class="kpi-s">近4周合计 · '+weeks4.length+' 周期</div></div><div class="card kpi k2"><div class="kpi-g"></div><div class="kpi-l">涉及区域</div><div class="kpi-v">'+affected.length+'<span class="kpi-u">个</span></div><div class="kpi-s">'+affected.join(' · ')+'</div></div><div class="card kpi k3"><div class="kpi-g"></div><div class="kpi-l">勘误总笔数</div><div class="kpi-v">'+totalR+'<span class="kpi-u">笔</span></div><div class="kpi-s">近4周合计 · 含所有原因类别</div></div>';;
 
