@@ -83,8 +83,15 @@ jobs:
           regions_set = set()
           for wk in wk_keys:
               wk_rows = [r for r in rows if (r[11] or '').strip() == wk]
-              month = (wk_rows[0][1] or '').strip()
-              period = (wk_rows[0][0] or '').strip() or f'W{len(weeks)+1}'
+              # Period: use existing label if any record has one, else auto-generate
+              wk_periods = set((r[0] or '').strip() for r in wk_rows if (r[0] or '').strip())
+              period = sorted(wk_periods)[0] if wk_periods else f'W{len(weeks)+1}'
+              # Month: use most common month in the week
+              month_counts = {}
+              for r in wk_rows:
+                  m = (r[1] or '').strip()
+                  if m: month_counts[m] = month_counts.get(m, 0) + 1
+              month = max(month_counts, key=month_counts.get) if month_counts else (wk_rows[0][1] or '').strip()
               regs = {}
               for r in wk_rows:
                   rg = (r[4] or '').strip()
