@@ -1,457 +1,337 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1099 薪资勘误看板</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1099司机薪酬看板 | 2026年1月-7月</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#f5f7fa;color:#111827;font-family:'Inter',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
-body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(140px);opacity:.06;pointer-events:none;z-index:0}
-body::before{width:600px;height:600px;background:#00d4ff;top:-200px;left:-150px;animation:b1 18s ease-in-out infinite}
-body::after{width:500px;height:500px;background:#a855f7;top:50%;right:-150px;animation:b2 22s ease-in-out infinite;animation-delay:-8s}
-@keyframes b1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-40px) scale(1.1)}66%{transform:translate(-30px,20px) scale(.9)}}
-@keyframes b2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-50px,-20px) scale(1.15)}66%{transform:translate(30px,40px) scale(.85)}}
-.ctn{max-width:1400px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
-.hd{text-align:center;padding:48px 0 36px}
-.hd-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);font-size:13px;font-weight:600;color:#9333ea;letter-spacing:.05em;margin-bottom:20px}
-.hd-dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:p 2s ease-in-out infinite}
-@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
-.hd h1{font-size:56px;font-weight:900;letter-spacing:-.04em;background:linear-gradient(135deg,#1c1a17 0%,#5a5957 50%,#7e7d7b 100%);-webkit-background-clip:text;-webkit-fill-color:transparent;background-clip:text;margin-bottom:12px;line-height:1.1}
-.hd p{font-size:17px;color:#6b7280;max-width:540px;margin:0 auto}
-.hd-meta{display:flex;justify-content:center;gap:32px;margin-top:18px;font-size:14px;color:#9ca3af}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background:#f0f2f5; color:#1a1a2e; padding:24px; }
+.header { text-align:center; margin-bottom:28px; }
+.header h1 { font-size:28px; font-weight:700; color:#1a1a2e; }
+.header p { font-size:14px; color:#666; margin-top:6px; }
 
-/* Refresh button */
-#btnRefresh{position:relative;overflow:hidden}
-#btnRefresh.loading{pointer-events:none;opacity:.7}
-#btnRefresh.loading::after{content:'';position:absolute;bottom:0;left:0;height:2px;background:#a855f7;animation:rbar 2s ease-in-out infinite}
-@keyframes rbar{0%{width:0;left:0}50%{width:60%;left:20%}100%{width:0;left:100%}}
-.rf-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:rfIn .3s ease-out;transition:all .3s}
-.rf-toast.info{background:#fff;color:#111827;border:1px solid #e5e7eb}
-.rf-toast.success{background:#10b981;color:#fff}
-.rf-toast.error{background:#ef4444;color:#fff}
-@keyframes rfIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px; }
+.kpi-card { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.08); text-align:center; }
+.kpi-card .label { font-size:13px; color:#888; margin-bottom:6px; }
+.kpi-card .value { font-size:26px; font-weight:700; color:#1a1a2e; }
+.kpi-card .sub { font-size:12px; color:#999; margin-top:4px; }
 
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:20px;transition:all .3s;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.card:hover{background:#fafbfc;box-shadow:0 4px 16px rgba(168,85,247,.1)}
+.chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.chart-card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.chart-card.full { grid-column:1/-1; margin-bottom:20px; }
+.chart-card h3 { font-size:16px; font-weight:600; color:#333; margin-bottom:16px; }
 
-.bento{display:grid;gap:20px;margin-bottom:20px}
-.bento-3{grid-template-columns:1fr 1fr 1fr}
-.bento-2{grid-template-columns:1fr 1fr}
-.bento-1{grid-template-columns:1fr}
-.bento-4{grid-template-columns:repeat(4,1fr)}
+.table-card { background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:20px; overflow-x:auto; }
+.table-card h3 { font-size:16px; font-weight:600; color:#333; margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:#f7f8fa; padding:10px 12px; text-align:right; font-weight:600; color:#555; border-bottom:2px solid #e8e8e8; white-space:nowrap; }
+th:first-child, th:nth-child(2) { text-align:left; }
+td { padding:9px 12px; text-align:right; border-bottom:1px solid #f0f0f0; }
+td:first-child, td:nth-child(2) { text-align:left; }
+tr:hover td { background:#f7f8fa; }
+.num { font-variant-numeric:tabular-nums; }
+.highlight { color:#2563eb; font-weight:600; }
+#regionFilter button {
+  padding: 8px 20px; border: 2px solid #d1d5db; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s;
+  background: #fff; color: #555;
+}
+#regionFilter button:hover { border-color: #2563eb; color: #2563eb; background: #f0f4ff; }
+#regionFilter button.active { border-color: #2563eb; background: #2563eb; color: #fff; }
 
-.kpi{padding:28px 30px;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
-.kpi.k1::before{background:linear-gradient(90deg,#00d4ff,transparent)}
-.kpi.k2::before{background:linear-gradient(90deg,#a855f7,transparent)}
-.kpi.k3::before{background:linear-gradient(90deg,#ec4899,transparent)}
-.kpi-l{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:8px}
-.kpi-v{font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;margin-bottom:6px;color:#111827}
-.kpi-u{font-size:20px;font-weight:500;opacity:.4;margin-left:4px}
-.kpi-s{font-size:14px;color:#6b7280}
-.kpi-g{position:absolute;top:-30px;right:-20px;width:120px;height:120px;border-radius:50%;filter:blur(45px);opacity:.08}
-.kpi.k1 .kpi-g{background:#00d4ff}.kpi.k2 .kpi-g{background:#a855f7}.kpi.k3 .kpi-g{background:#ec4899}
 
-.cc{padding:28px 32px}
-.cc-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
-.cc-t{font-size:18px;font-weight:700;color:#111827}.cc-s{font-size:13px;color:#9ca3af;margin-top:3px}
+.footer { text-align:center; padding:16px; color:#999; font-size:12px; }
 
-.pill{display:inline-flex;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.02em}
-.pc{background:rgba(0,212,255,.12);color:#0891b2}
-.pp{background:rgba(168,85,247,.12);color:#9333ea}
-.pg{background:rgba(16,185,129,.12);color:#059669}
-
-.sec-t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;color:#111827}
-.sec-s{font-size:14px;color:#9ca3af;margin-bottom:24px}
-
-.wc{padding:22px 18px;text-align:center}
-.wc-label{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
-.w1{color:#0891b2}.w2{color:#059669}.w3{color:#d97706}.w4{color:#ea580c}
-.wc-date{font-size:11px;color:#9ca3af;margin-bottom:14px}
-.wc-s{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:1px solid #f3f4f6}
-.wc-s .r{color:#6b7280;font-weight:500}.wc-s .v{font-weight:700;color:#111827}.wc-s .v.bp{color:#ea580c}
-.wc-em{padding:36px 20px;color:#9ca3af;font-size:14px}
-
-.ft{text-align:center;padding:36px 0;font-size:13px;color:#9ca3af;border-top:1px solid #e5e7eb}
-
-@media(max-width:1100px){.bento-3{grid-template-columns:1fr 1fr}.bento-2{grid-template-columns:1fr}.bento-4{grid-template-columns:repeat(2,1fr)}.hd h1{font-size:40px}}
-@media(max-width:640px){.bento-3{grid-template-columns:1fr}.bento-4{grid-template-columns:1fr}.hd h1{font-size:32px}.kpi-v{font-size:36px}}
+@media (max-width:900px) {
+  .kpi-row { grid-template-columns:repeat(3,1fr); }
+  .chart-grid { grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
-<div class="ctn">
 
-<header class="hd">
-<div class="hd-badge"><span class="hd-dot"></span> 手动刷新 · 点击右上角按钮更新</div>
-<div style="position:fixed;top:16px;right:20px;z-index:999;display:flex;gap:8px">
-  <button id="btnRefresh" onclick="refreshData()" style="padding:8px 18px;border-radius:8px;border:1px solid #a855f7;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 1px 3px rgba(168,85,247,.3);transition:all .2s;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='linear-gradient(135deg,#9333ea,#6d28d9)'" onmouseout="this.style.background='linear-gradient(135deg,#a855f7,#7c3aed)'">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-    刷新数据
-  </button>
-  <button id="btnDownload" onclick="downloadImage()" style="padding:8px 18px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:all .2s;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#fff'">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    下载长图
-  </button>
-</div>
-<h1>1099 薪资勘误看板</h1>
-<p>各区域每周工时补发追踪 · 近4周滚动更新 · 月度累计含全部周期</p>
-<div class="hd-meta"><span id="hdDateRange">● 6月–7月数据</span><span>● 飞书多维表格 · 1099薪资勘误数据</span></div>
-</header>
-
-<!-- KPI -->
-<div class="bento bento-3" id="kpiRow"></div>
-
-<!-- Chart 1: Weekly Bar - full width, stacked vertically -->
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">📊 各区域每周补发工时</div><div class="cc-s">仅含补发 &gt;0 区域</div></div><span class="pill pp">近 4 周</span></div>
-<div id="chartWeekly"></div>
+<div class="header">
+  <h1>1099司机薪酬看板</h1>
+  <p>2026年1月 - 7月 | 按人数统计（已去重） | 金额单位：万元</p>
 </div>
 
-<!-- Chart 2: Reason Distribution - full width, below -->
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">🍩 补发原因分布</div><div class="cc-s"></div></div><span class="pill pc">近4周</span></div>
-<div id="chartReason"></div>
+<!-- 区域筛选按钮 -->
+<div id="regionFilter" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;"></div>
+
+<!-- KPI Cards -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="label">累计人数（去重）</div>
+    <div class="value" id="kpi-persons">-</div>
+    <div class="sub">每月去重后合计</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">累计人力成本（本币）</div>
+    <div class="value" id="kpi-cost">-</div>
+    <div class="sub">CNY 万元</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">累计工时</div>
+    <div class="value" id="kpi-hours">-</div>
+    <div class="sub">小时</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">人均月成本</div>
+    <div class="value" id="kpi-avgcost">-</div>
+    <div class="sub">CNY 万元 / 人·月</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">人均月工时</div>
+    <div class="value" id="kpi-avghours">-</div>
+    <div class="sub">小时 / 人·月</div>
+  </div>
 </div>
 
-<!-- Chart 3/4: Trend + Ratio, side by side -->
-<div class="bento bento-2">
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">📈 补发工时周趋势</div><div class="cc-s">全区域合计</div></div><span class="pill pg">近4周</span></div>
-<div id="chartTrend"></div>
-</div>
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">🏷️ 各区域出错占比排名</div><div class="cc-s">近4周均值</div></div><span class="pill pp">近4周</span></div>
-<div id="chartRatio"></div>
-</div>
+<!-- 7月总数据 & 环比差异率 -->
+<div class="kpi-row" id="aprKpiRow" style="margin-bottom:20px;"></div>
+
+<!-- 1. 月度成本、工时与人数趋势 -->
+<div class="chart-card full">
+  <h3>月度成本、工时与人数趋势</h3>
+  <canvas id="chartTrend" style="max-height:500px;"></canvas>
 </div>
 
-<!-- Week chips -->
-<div style="margin-bottom:20px">
-<div class="sec-t">📋 周度明细速览</div><div class="sec-s">只记录存在补发的区域</div>
-<div class="bento bento-4" id="weekChips"></div>
+<!-- 2. 各区月度成本分布（分组柱状） -->
+<div class="chart-card full" id="sectionGrouped">
+  <h3>各区月度成本分布（分组柱状）</h3>
+  <canvas id="chartGrouped" style="max-height:380px;"></canvas>
 </div>
 
-<!-- Monthly charts -->
-<div class="bento bento-2" style="margin-bottom:48px">
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">📊 月度补发工时对比</div><div class="cc-s"></div></div><span class="pill pc">全周期</span></div>
-<div id="chartMonthly"></div>
-</div>
-<div class="card cc">
-<div class="cc-hd"><div><div class="cc-t">📉 月度出错占比对比</div><div class="cc-s"></div></div><span class="pill pp">全周期</span></div>
-<div id="chartMonthlyRatio"></div>
-</div>
-</div>
-
-<div class="ft"><strong>1099 薪资勘误看板</strong> · OTWS · 更新于 2026.07.31 · 数据源：飞书多维表格</div>
-
+<!-- 3. 各区月度人数趋势 + 7月各区人均 -->
+<div class="chart-grid" style="margin-bottom:20px;">
+  <div class="chart-card" id="sectionRegionPersons">
+    <h3>各区月度人数趋势</h3>
+    <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
+  </div>
+  <div class="chart-card" id="sectionAprilPC">
+    <h3>7月各区人均月成本 & 人均月工时</h3>
+    <canvas id="chartAprilPerCapita" style="max-height:260px;"></canvas>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<!-- 4. 各区成本与人数占比 -->
+<div class="chart-card" id="sectionPie" style="margin-bottom:20px; text-align:center;">
+  <h3>各区成本与人数占比（1-7月累计）</h3>
+  <canvas id="chartPie" style="max-height:550px;"></canvas>
+</div>
+
+<!-- Detailed Table -->
+<div class="table-card">
+  <h3>明细数据表（月度 x 区域 | 按人数统计）</h3>
+  <table id="detailTable">
+    <thead>
+      <tr>
+        <th>月份</th><th>区域</th><th>人数</th><th>总工时(h)</th>
+        <th>人均工时(h)</th><th>原币月总成本</th><th>本币月总成本（CNY）</th><th>人均成本(CNY万元)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="footer">数据更新时间：2026-06-05 | 1099司机实发人力成本 | 按人数去重统计</div>
+
 <script>
-// Refresh: trigger GitHub Actions workflow → poll data.json for changes
-var _tk=[61,50,53,5,13,2,63,55,47,59,15,25,27,106,16,23,42,21,50,2,0,35,60,27,42,55,0,57,19,105,48,98,25,52,110,10,20,13,56,60];
-function _dt(){var r='';for(var i=0;i<_tk.length;i++)r+=String.fromCharCode(_tk[i]^0x5A);return r}
+const DATA = {"total":{"unique_persons":511,"person_months":2077,"cost_local":86552555.96,"cost_orig":12563786.83,"hours":475852.69,"avg_cost_per_person":41671.91,"avg_hours_per_person":229.11},"months":["2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],"months_short":["1月","2月","3月","4月","5月","6月","7月"],"monthly":{"person_count":[245,233,264,289,338,345,363],"hours":[54696.61,50935.73,60922.1,65090.48,74901.25,82849.52,86457.0],"cost":[9721495.9,9085543.39,10779701.65,11733667.55,13583209.25,15202636.8,16446301.42],"avg_cost_per_person":[39679.58,38993.75,40832.2,40600.93,40187.01,44065.61,45306.62],"avg_hours_per_person":[223.25,218.61,230.77,225.23,221.6,240.14,238.17]},"regions":["MS 中南大区","TX 德州大区","NE 东北大区","WE 美西大区","GL 大湖大区","Ground项目部"],"region_stats":{"person_count":[133,229,800,752,99,64],"hours":[30359.98,34616.95,205811.12,170892.19,22455.86,11716.59],"cost":[5626038.79,7733661.35,36700095.18,30502999.17,3961098.36,2028663.11],"avg_cost_per_person":[42301.04,33771.45,45875.12,40562.5,40011.09,31697.86],"avg_hours_per_person":[228.27,151.17,257.26,227.25,226.83,183.07]},"monthly_region_cost":[{"month":"2026-01","MS 中南大区":489930.7,"TX 德州大区":762196.68,"NE 东北大区":4568629.19,"WE 美西大区":3086687.05,"GL 大湖大区":423042.39,"Ground项目部":391009.89},{"month":"2026-02","MS 中南大区":459208.96,"TX 德州大区":865606.87,"NE 东北大区":4341600.92,"WE 美西大区":2831269.03,"GL 大湖大区":378307.99,"Ground项目部":209549.62},{"month":"2026-03","MS 中南大区":583403.12,"TX 德州大区":966423.64,"NE 东北大区":5245360.08,"WE 美西大区":3287957.83,"GL 大湖大区":472580.17,"Ground项目部":223976.81},{"month":"2026-04","MS 中南大区":805453.66,"TX 德州大区":1135356.46,"NE 东北大区":5566955.04,"WE 美西大区":3431459.23,"GL 大湖大区":580102.64,"Ground项目部":214340.52},{"month":"2026-05","MS 中南大区":904031.63,"TX 德州大区":1097708.57,"NE 东北大区":5577433.66,"WE 美西大区":5151242.87,"GL 大湖大区":643602.37,"Ground项目部":209190.15},{"month":"2026-06","MS 中南大区":1094988.64,"TX 德州大区":1233984.1,"NE 东北大区":5773613.34,"WE 美西大区":6027663.71,"GL 大湖大区":674344.09,"Ground项目部":398042.92},{"month":"2026-07","MS 中南大区":1289022.08,"TX 德州大区":1672385.03,"NE 东北大区":5626502.95,"WE 美西大区":6686719.45,"GL 大湖大区":789118.71,"Ground项目部":382553.2}],"monthly_region_persons":[{"month":"2026-01","MS 中南大区":12,"TX 德州大区":29,"NE 东北大区":112,"WE 美西大区":72,"GL 大湖大区":9,"Ground项目部":11},{"month":"2026-02","MS 中南大区":12,"TX 德州大区":28,"NE 东北大区":104,"WE 美西大区":69,"GL 大湖大区":10,"Ground项目部":10},{"month":"2026-03","MS 中南大区":19,"TX 德州大区":30,"NE 东北大区":119,"WE 美西大区":75,"GL 大湖大区":12,"Ground项目部":9},{"month":"2026-04","MS 中南大区":20,"TX 德州大区":32,"NE 东北大区":122,"WE 美西大区":91,"GL 大湖大区":16,"Ground项目部":8},{"month":"2026-05","MS 中南大区":21,"TX 德州大区":33,"NE 东北大区":115,"WE 美西大区":143,"GL 大湖大区":19,"Ground项目部":7},{"month":"2026-06","MS 中南大区":22,"TX 德州大区":35,"NE 东北大区":119,"WE 美西大区":145,"GL 大湖大区":16,"Ground项目部":8},{"month":"2026-07","MS 中南大区":27,"TX 德州大区":42,"NE 东北大区":109,"WE 美西大区":157,"GL 大湖大区":17,"Ground项目部":11}],"detail_rows":[{"month":"2026-01","region":"MS 中南大区","person_count":12,"hours":2893.89,"avg_hours":241.16,"cost":489930.7,"avg_cost":40827.56,"orig_cost":69703.32},{"month":"2026-01","region":"TX 德州大区","person_count":29,"hours":3887.17,"avg_hours":134.04,"cost":762196.68,"avg_cost":26282.64,"orig_cost":108439.09},{"month":"2026-01","region":"NE 东北大区","person_count":112,"hours":25125.75,"avg_hours":224.34,"cost":4568629.19,"avg_cost":40791.33,"orig_cost":649987.08},{"month":"2026-01","region":"WE 美西大区","person_count":72,"hours":18116.18,"avg_hours":251.61,"cost":3086687.05,"avg_cost":42870.65,"orig_cost":439148.51},{"month":"2026-01","region":"GL 大湖大区","person_count":9,"hours":2453.48,"avg_hours":272.61,"cost":423042.39,"avg_cost":47004.71,"orig_cost":60187.0},{"month":"2026-01","region":"Ground项目部","person_count":11,"hours":2220.14,"avg_hours":201.83,"cost":391009.89,"avg_cost":35546.35,"orig_cost":55629.68},{"month":"2026-02","region":"MS 中南大区","person_count":12,"hours":2752.59,"avg_hours":229.38,"cost":459208.96,"avg_cost":38267.41,"orig_cost":65904.44},{"month":"2026-02","region":"TX 德州大区","person_count":28,"hours":4024.0,"avg_hours":143.71,"cost":865606.87,"avg_cost":30914.53,"orig_cost":124229.58},{"month":"2026-02","region":"NE 东北大区","person_count":104,"hours":24028.12,"avg_hours":231.04,"cost":4341600.92,"avg_cost":41746.16,"orig_cost":623094.94},{"month":"2026-02","region":"WE 美西大区","person_count":69,"hours":16816.59,"avg_hours":243.72,"cost":2831269.03,"avg_cost":41032.88,"orig_cost":406336.15},{"month":"2026-02","region":"GL 大湖大区","person_count":10,"hours":2171.75,"avg_hours":217.18,"cost":378307.99,"avg_cost":37830.8,"orig_cost":54293.75},{"month":"2026-02","region":"Ground项目部","person_count":10,"hours":1142.68,"avg_hours":114.27,"cost":209549.62,"avg_cost":20954.96,"orig_cost":30074.0},{"month":"2026-03","region":"MS 中南大区","person_count":19,"hours":3432.95,"avg_hours":180.68,"cost":583403.12,"avg_cost":30705.43,"orig_cost":84272.71},{"month":"2026-03","region":"TX 德州大区","person_count":30,"hours":4518.17,"avg_hours":150.61,"cost":966423.64,"avg_cost":32214.12,"orig_cost":139600.11},{"month":"2026-03","region":"NE 东北大区","person_count":119,"hours":29255.22,"avg_hours":245.84,"cost":5245360.08,"avg_cost":44078.66,"orig_cost":757693.43},{"month":"2026-03","region":"WE 美西大区","person_count":75,"hours":19745.23,"avg_hours":263.27,"cost":3287957.83,"avg_cost":43839.44,"orig_cost":474946.24},{"month":"2026-03","region":"GL 大湖大区","person_count":12,"hours":2687.87,"avg_hours":223.99,"cost":472580.17,"avg_cost":39381.68,"orig_cost":68264.31},{"month":"2026-03","region":"Ground项目部","person_count":9,"hours":1282.66,"avg_hours":142.52,"cost":223976.81,"avg_cost":24886.31,"orig_cost":32353.5},{"month":"2026-04","region":"MS 中南大区","person_count":20,"hours":4346.33,"avg_hours":217.32,"cost":805453.66,"avg_cost":40272.68,"orig_cost":116405.13},{"month":"2026-04","region":"TX 德州大区","person_count":32,"hours":4760.99,"avg_hours":148.78,"cost":1135356.46,"avg_cost":35479.89,"orig_cost":164083.08},{"month":"2026-04","region":"NE 东北大区","person_count":122,"hours":31228.75,"avg_hours":255.97,"cost":5566955.04,"avg_cost":45630.78,"orig_cost":804543.03},{"month":"2026-04","region":"WE 美西大区","person_count":91,"hours":20204.11,"avg_hours":222.02,"cost":3431459.23,"avg_cost":37708.34,"orig_cost":495918.61},{"month":"2026-04","region":"GL 大湖大区","person_count":16,"hours":3311.23,"avg_hours":206.95,"cost":580102.64,"avg_cost":36256.41,"orig_cost":83837.13},{"month":"2026-04","region":"Ground项目部","person_count":8,"hours":1239.07,"avg_hours":154.88,"cost":214340.52,"avg_cost":26792.57,"orig_cost":30976.75},{"month":"2026-05","region":"MS 中南大区","person_count":21,"hours":4777.97,"avg_hours":227.52,"cost":904031.63,"avg_cost":43049.13,"orig_cost":131729.27},{"month":"2026-05","region":"TX 德州大区","person_count":33,"hours":4942.49,"avg_hours":149.77,"cost":1097708.57,"avg_cost":33263.9,"orig_cost":159950.54},{"month":"2026-05","region":"NE 东北大区","person_count":115,"hours":31710.13,"avg_hours":275.74,"cost":5577433.66,"avg_cost":48499.42,"orig_cost":812705.26},{"month":"2026-05","region":"WE 美西大区","person_count":143,"hours":28622.78,"avg_hours":200.16,"cost":5151242.87,"avg_cost":36022.68,"orig_cost":750603.67},{"month":"2026-05","region":"GL 大湖大区","person_count":19,"hours":3628.61,"avg_hours":190.98,"cost":643602.37,"avg_cost":33873.81,"orig_cost":93781.31},{"month":"2026-05","region":"Ground项目部","person_count":7,"hours":1219.27,"avg_hours":174.18,"cost":209190.15,"avg_cost":29884.31,"orig_cost":30481.75},{"month":"2026-06","region":"MS 中南大区","person_count":22,"hours":5730.0,"avg_hours":260.45,"cost":1094988.64,"avg_cost":49772.21,"orig_cost":160612.04},{"month":"2026-06","region":"TX 德州大区","person_count":35,"hours":5796.49,"avg_hours":165.61,"cost":1233984.1,"avg_cost":35256.69,"orig_cost":180999.78},{"month":"2026-06","region":"NE 东北大区","person_count":119,"hours":32552.72,"avg_hours":273.55,"cost":5773613.34,"avg_cost":48517.76,"orig_cost":846868.89},{"month":"2026-06","region":"WE 美西大区","person_count":145,"hours":32605.65,"avg_hours":224.87,"cost":6027663.71,"avg_cost":41570.09,"orig_cost":884132.79},{"month":"2026-06","region":"GL 大湖大区","person_count":16,"hours":3821.82,"avg_hours":238.86,"cost":674344.09,"avg_cost":42146.51,"orig_cost":98912.24},{"month":"2026-06","region":"Ground项目部","person_count":8,"hours":2342.84,"avg_hours":292.86,"cost":398042.92,"avg_cost":49755.36,"orig_cost":58384.61},{"month":"2026-07","region":"MS 中南大区","person_count":27,"hours":6426.25,"avg_hours":238.01,"cost":1289022.08,"avg_cost":47741.56,"orig_cost":189258.7},{"month":"2026-07","region":"TX 德州大区","person_count":42,"hours":6687.64,"avg_hours":159.23,"cost":1672385.03,"avg_cost":39818.69,"orig_cost":245545.38},{"month":"2026-07","region":"NE 东北大区","person_count":109,"hours":31910.43,"avg_hours":292.76,"cost":5626502.95,"avg_cost":51619.29,"orig_cost":826102.71},{"month":"2026-07","region":"WE 美西大区","person_count":157,"hours":34781.65,"avg_hours":221.54,"cost":6686719.45,"avg_cost":42590.57,"orig_cost":981767.38},{"month":"2026-07","region":"GL 大湖大区","person_count":17,"hours":4381.1,"avg_hours":257.71,"cost":789118.71,"avg_cost":46418.75,"orig_cost":115861.15},{"month":"2026-07","region":"Ground项目部","person_count":11,"hours":2269.93,"avg_hours":206.36,"cost":382553.2,"avg_cost":34777.56,"orig_cost":56167.79}]};
 
-function toast(msg,type){
-  type=type||'info';
-  var t=document.createElement('div');
-  t.className='rf-toast '+type;t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove()},300)},3000);
+const REGION_COLORS = {
+  'MS 中南大区': '#8b5cf6', 'TX 德州大区': '#10b981',
+  'NE 东北大区': '#2563eb', 'WE 美西大区': '#f59e0b',
+  'GL 大湖大区': '#ec4899', 'Ground项目部': '#06b6d4'
+};
+const REGION_COLORS_ALPHA = {
+  'MS 中南大区': 'rgba(139,92,246,0.7)', 'TX 德州大区': 'rgba(16,185,129,0.7)',
+  'NE 东北大区': 'rgba(37,99,235,0.7)', 'WE 美西大区': 'rgba(245,158,11,0.7)',
+  'GL 大湖大区': 'rgba(236,72,153,0.7)', 'Ground项目部': 'rgba(6,182,212,0.7)'
+};
+
+const W = n => (n / 10000).toFixed(0);
+const W2 = n => (n / 10000).toFixed(2);
+const FMTW = n => '¥' + W(n) + '万';
+const FMTU = n => '$' + (n / 10000).toFixed(0) + '万';
+const FMTN = n => n.toLocaleString('en-US');
+const FMTH = n => FMTN(Math.round(n));
+
+// ===== Region filter buttons =====
+let currentRegion = null;
+let charts = {};
+const filterDiv = document.getElementById('regionFilter');
+function buildFilterButtons() {
+  const allBtn = document.createElement('button');
+  allBtn.textContent = '全部'; allBtn.className = 'active';
+  allBtn.onclick = () => { currentRegion = null; renderAll(); setActive(allBtn); };
+  filterDiv.appendChild(allBtn);
+  DATA.regions.forEach(r => {
+    const btn = document.createElement('button');
+    btn.textContent = r;
+    btn.style.borderLeftWidth = '5px';
+    btn.style.borderLeftColor = REGION_COLORS[r];
+    btn.onclick = () => { currentRegion = r; renderAll(); setActive(btn); };
+    filterDiv.appendChild(btn);
+  });
+}
+function setActive(active) { filterDiv.querySelectorAll('button').forEach(b => b.classList.remove('active')); active.classList.add('active'); }
+buildFilterButtons();
+
+function renderAll() {
+  Object.values(charts).forEach(c => c.destroy()); charts = {};
+  const R = currentRegion;
+  const regions = R ? [R] : DATA.regions;
+  // 仅"全部"时显示这些板块
+  document.getElementById('sectionAprilPC').style.display = R ? 'none' : '';
+  document.getElementById('sectionPie').style.display = R ? 'none' : '';
+  document.getElementById('sectionGrouped').style.display = R ? 'none' : '';
+  document.getElementById('sectionRegionPersons').style.display = R ? 'none' : '';
+  const months = DATA.months, months_short = DATA.months_short;
+  const filtered = R ? DATA.detail_rows.filter(r => r.region === R) : DATA.detail_rows;
+
+  // KPIs
+  const totalPersons = filtered.reduce((s,r)=>s+r.person_count,0);
+  const totalCost = filtered.reduce((s,r)=>s+r.cost,0);
+  const totalHours = filtered.reduce((s,r)=>s+r.hours,0);
+  const avgCost = totalPersons>0 ? totalCost/totalPersons : 0;
+  const avgHours = totalPersons>0 ? totalHours/totalPersons : 0;
+  document.getElementById('kpi-persons').textContent = FMTN(totalPersons);
+  document.getElementById('kpi-cost').textContent = FMTW(totalCost);
+  document.getElementById('kpi-hours').textContent = FMTH(totalHours);
+  document.getElementById('kpi-avgcost').textContent = '¥'+W2(avgCost)+'万';
+  document.getElementById('kpi-avghours').textContent = avgHours.toFixed(1)+'h';
+
+  // Monthly aggregates
+  const mCost = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.cost,0));
+  const mHours = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.hours,0));
+  const mPersons = months.map(m=>filtered.filter(r=>r.month===m).reduce((s,r)=>s+r.person_count,0));
+  const mAvgCost = months.map((_,i)=>mPersons[i]>0?mCost[i]/mPersons[i]:0);
+  const mAvgHours = months.map((_,i)=>mPersons[i]>0?mHours[i]/mPersons[i]:0);
+
+  // Latest month vs previous month KPI
+  const ai = months.length - 1, mi = months.length - 2;
+  const mom = (a,b) => b>0 ? ((a-b)/b*100).toFixed(2) : '—';
+  const momC = v => { const n=parseFloat(v); return n>=0?'#10b981':'#dc2626'; };
+  const momS = v => { const n=parseFloat(v); return n>=0?'+':''; };
+  const aprP=mPersons[ai],marP=mPersons[mi],aprC=mCost[ai],marC=mCost[mi],aprH=mHours[ai],marH=mHours[mi];
+  const aprAC=mAvgCost[ai],marAC=mAvgCost[mi],aprAH=mAvgHours[ai],marAH=mAvgHours[mi];
+  document.getElementById('aprKpiRow').innerHTML = `
+    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">7月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">7月人力成本</div><div class="value" style="font-size:22px;">${FMTW(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">7月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">7月人均月成本</div><div class="value" style="font-size:22px;">¥${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">7月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
+
+  Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif";
+  Chart.defaults.font.size = 12;
+
+  // ===== 1. 月度趋势 =====
+  const trendPlugin = { id:'trendBL', afterDraw(chart){ const ctx=chart.ctx,ca=chart.chartArea; ctx.save(); ctx.font='bold 12px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif'; ctx.fillStyle='#666'; ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillText('CNY 万元',ca.left-38,ca.bottom+6); ctx.textAlign='right'; ctx.fillText('万小时',ca.right+19,ca.bottom+6); ctx.fillText('人数',ca.right+57,ca.bottom+22); ctx.restore(); }};
+  const ctx1 = document.getElementById('chartTrend').getContext('2d');
+  const g1 = ctx1.createLinearGradient(0,0,0,400); g1.addColorStop(0,'rgba(37,99,235,0.75)'); g1.addColorStop(1,'rgba(37,99,235,0.15)');
+  const g2 = ctx1.createLinearGradient(0,0,0,400); g2.addColorStop(0,'rgba(220,38,38,0.25)'); g2.addColorStop(1,'rgba(220,38,38,0.02)');
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type:'bar',
+    data:{ labels:months_short, datasets:[
+      {label:'本币成本 (CNY万元)',data:mCost.map(v=>v/10000),backgroundColor:g1,borderColor:'#2563eb',borderWidth:1.5,borderRadius:8,yAxisID:'y',order:2},
+      {label:'总工时 (万h)',data:mHours.map(v=>v/10000),type:'line',borderColor:'#dc2626',backgroundColor:g2,borderWidth:3,fill:true,tension:0.4,pointRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#dc2626',pointBorderWidth:3,yAxisID:'y1',order:1},
+      {label:'人数',data:mPersons,type:'line',borderColor:'#7c3aed',backgroundColor:'transparent',borderWidth:3,borderDash:[10,5],fill:false,tension:0.4,pointRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#7c3aed',pointBorderWidth:3,yAxisID:'y2',order:0}
+    ]},
+    options:{ responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},layout:{padding:{bottom:22}},
+      plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:24,font:{size:12}}},datalabels:{formatter:function(v,ctx){if(ctx.datasetIndex===0)return '¥'+v.toFixed(0)+'万';if(ctx.datasetIndex===1)return v.toFixed(0)+'万h';return v+'人';},font:{size:10,weight:'bold'},color:function(ctx){if(ctx.datasetIndex===0)return '#1a1a2e';if(ctx.datasetIndex===1)return '#dc2626';return '#7c3aed';},anchor:function(ctx){return ctx.datasetIndex===0?'end':'center';},align:function(ctx){if(ctx.datasetIndex===0)return 'end';if(ctx.datasetIndex===1)return 'top';return 'bottom';},offset:function(ctx){return ctx.datasetIndex===0?6:8;},display:true}},
+      scales:{y:{position:'left',ticks:{callback:v=>'¥'+v.toFixed(0)+'万',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}},y1:{position:'right',ticks:{callback:v=>v.toFixed(2),font:{size:10}},grid:{drawOnChartArea:false}},y2:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:10}}}}
+    },plugins:[ChartDataLabels,trendPlugin]
+  });
+
+  // ===== 2. 各区月度成本分布 =====
+  const blPlugin = {id:'bottomLeft',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='bold 12px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('CNY 万元',ca.left-38,ca.bottom+6);ctx.restore();}};
+  charts.grouped = new Chart(document.getElementById('chartGrouped'), {
+    type:'bar',
+    data:{labels:months_short,datasets:regions.map(r=>({label:r,data:months.map(m=>{const row=DATA.detail_rows.find(d=>d.region===r&&d.month===m);return row?row.cost/10000:0;}),backgroundColor:REGION_COLORS_ALPHA[r],borderColor:REGION_COLORS[r],borderWidth:1,borderRadius:4}))},
+    options:{responsive:true,maintainAspectRatio:true,layout:{padding:{bottom:22}},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{anchor:'end',align:'top',offset:0,formatter:v=>v>=1?v.toFixed(0):'',font:{size:11,weight:'bold'},color:'#444'}},scales:{y:{ticks:{callback:v=>'¥'+v.toFixed(0)+'万',font:{size:10}},grid:{color:'rgba(0,0,0,0.04)'}}}},
+    plugins:[ChartDataLabels,blPlugin]
+  });
+
+  // ===== 3. 各区月度人数趋势 =====
+  charts.regionPersons = new Chart(document.getElementById('chartRegionPersons'), {
+    type:'line',
+    data:{labels:months_short,datasets:regions.map(r=>({label:r,data:months.map(m=>{const row=DATA.detail_rows.find(d=>d.region===r&&d.month===m);return row?row.person_count:0;}),borderColor:REGION_COLORS[r],backgroundColor:'transparent',borderWidth:2.5,tension:0.35,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{anchor:'end',align:'top',offset:2,formatter:v=>v+'人',font:{size:10,weight:'bold'},color:'#555'}},scales:{y:{title:{display:false},beginAtZero:false,min:0,ticks:{font:{size:10}}}}},
+    plugins:[ChartDataLabels,{id:'yUL',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('人数',ca.left+38,ca.bottom+8);ctx.restore();}}]
+  });
+
+  // ===== 3b. Latest month per-capita =====
+  const latestMonth = months[months.length - 1];
+  const aprRows = R ? DATA.detail_rows.filter(r=>r.region===R&&r.month===latestMonth) : DATA.detail_rows.filter(r=>r.month===latestMonth);
+  const aprRegs = aprRows.map(r=>r.region);
+  const aprPCC = aprRows.map(r=>r.avg_cost/10000);
+  const aprPCH = aprRows.map(r=>r.avg_hours);
+  const aprRC = aprRegs.map(r=>REGION_COLORS[r]||'#999');
+  charts.aprilPC = new Chart(document.getElementById('chartAprilPerCapita'), {
+    type:'bar',
+    data:{labels:aprRegs,datasets:[
+      {label:'人均月成本 (CNY万元)',data:aprPCC,backgroundColor:aprRC.map(c=>c+'aa'),borderColor:aprRC,borderWidth:1.5,borderRadius:6,yAxisID:'y',order:2},
+      {label:'人均月工时 (h)',data:aprPCH,type:'line',borderColor:'#dc2626',backgroundColor:'rgba(220,38,38,0.06)',borderWidth:3,fill:false,tension:0.35,pointRadius:5,pointBackgroundColor:'#dc2626',pointBorderWidth:2,yAxisID:'y1',order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,layout:{padding:{bottom:30}},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:10}}},datalabels:{formatter:function(v,ctx){return ctx.datasetIndex===0?v.toFixed(0)+'万':v.toFixed(0)+'h';},font:{size:9,weight:'bold'},color:function(ctx){return ctx.datasetIndex===0?'#333':'#dc2626';},anchor:function(ctx){return ctx.datasetIndex===0?'end':'center';},align:function(ctx){return ctx.datasetIndex===0?'end':'bottom';},offset:function(ctx){return ctx.datasetIndex===0?6:8;},display:true}},scales:{x:{ticks:{font:{size:9},maxRotation:25,minRotation:0}},y:{position:'left',ticks:{callback:v=>v.toFixed(0)+'万',font:{size:9}},grid:{color:'rgba(0,0,0,0.04)'},title:{display:false}},y1:{position:'right',ticks:{font:{size:9}},grid:{drawOnChartArea:false},title:{display:false}}}},
+    plugins:[ChartDataLabels,{id:'yULA',afterDraw(chart){const ctx=chart.ctx,ca=chart.chartArea;ctx.save();ctx.font='11px -apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.textAlign='left';ctx.fillText('CNY万元',ca.left-19,ca.bottom+16);ctx.textAlign='right';ctx.fillText('小时',ca.right,ca.bottom+16);ctx.restore();}}]
+  });
+
+  // ===== 4. 环形图 =====
+  const pLabels=regions, pData=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.cost[i]/10000:0;}), pColors=regions.map(r=>REGION_COLORS[r]), pPersons=regions.map(r=>{const i=DATA.regions.indexOf(r);return i>=0?DATA.region_stats.person_count[i]:0;});
+  const pieLabelPlugin = {
+    id: 'pieLabels',
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      const total = pData.reduce((a,b)=>a+b,0);
+      if (!total) return;
+      meta.data.forEach((arc, i) => {
+        const v = pData[i];
+        const pct = (v/total*100).toFixed(1);
+        if (pct < 2) return;
+        const name = pLabels[i];
+        const n = pPersons[i];
+        const angle = (arc.startAngle + arc.endAngle) / 2;
+        const r = arc.outerRadius + 16;
+        const x = arc.x + Math.cos(angle) * r;
+        const y = arc.y + Math.sin(angle) * r;
+        const isRight = Math.cos(angle) >= 0;
+        ctx.save();
+        ctx.font = 'bold 9px -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif';
+        ctx.fillStyle = '#1a1a2e';
+        ctx.textAlign = isRight ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        const pad = isRight ? 4 : -4;
+        ctx.fillText(name, x + pad, y - 10);
+        ctx.fillText(pct + '%', x + pad, y);
+        ctx.fillText('¥' + v.toFixed(0) + '万 | ' + n + '人', x + pad, y + 10);
+        ctx.restore();
+      });
+    }
+  };
+  charts.pie = new Chart(document.getElementById('chartPie'), {
+    type:'doughnut',
+    data:{labels:pLabels,datasets:[{data:pData,backgroundColor:pColors,borderWidth:3,borderColor:'#fff',hoverBorderWidth:4}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'40%',layout:{padding:30},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:14,font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>{const pct=(ctx.raw/pData.reduce((a,b)=>a+b,0)*100).toFixed(1);return ctx.label+': ¥'+ctx.raw.toFixed(0)+'万 ('+pct+'%) | '+pPersons[ctx.dataIndex]+'人';}}},datalabels:false}},
+    plugins: [pieLabelPlugin]
+  });
+
+  // ===== Detail Table =====
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = '';
+  filtered.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+r.month+'</td><td>'+r.region+'</td><td class="num">'+FMTN(r.person_count)+'</td><td class="num">'+FMTN(r.hours)+'</td><td class="num">'+r.avg_hours.toFixed(1)+'h</td><td class="num">'+FMTU(r.orig_cost)+'</td><td class="num highlight">'+FMTW(r.cost)+'</td><td class="num">'+FMTW(r.avg_cost)+'</td>';
+    tbody.appendChild(tr);
+  });
 }
 
-async function refreshData(){
-  var btn=document.getElementById('btnRefresh');
-  if(btn.classList.contains('loading'))return;
-  btn.classList.add('loading');
-  btn.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin-right:4px"></span>刷新中...';
-  toast('正在从飞书拉取最新数据...','info');
-
-  try{
-    // 1) Trigger GitHub Actions workflow to regenerate data.json
-    var tResp=await fetch('https://api.github.com/repos/anny528/1099-dashboard/actions/workflows/refresh.yml/dispatches',{
-      method:'POST',
-      headers:{'Authorization':'token '+_dt(),'Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify({ref:'main'})
-    });
-    if(!tResp.ok)throw new Error('Trigger failed: HTTP '+tResp.status);
-
-    // 2) Poll data.json until it changes (max 90s)
-    var oldSig=localStorage.getItem('_lastDataSig')||'';
-    var changed=false;
-    for(var i=0;i<18;i++){
-      await new Promise(function(r){setTimeout(r,5000)});
-      try{
-        var dResp=await fetch('data.json?t='+Date.now());
-        if(!dResp.ok)continue;
-        var newData=await dResp.json();
-        var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
-        if(newSig!==oldSig){
-          localStorage.setItem('_lastDataSig',newSig);
-          toast('数据已更新，重新渲染...','success');
-          renderAll(newData);
-          changed=true;
-          break;
-        }
-      }catch(e){continue}
-    }
-    if(!changed){
-      toast('等待超时，数据可能尚未更新。稍后会自动轮询检测','info');
-    }
-    btn.classList.remove('loading');
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
-  }catch(e){
-    // Fallback: just check data.json directly (might already be updated)
-    try{
-      var dResp=await fetch('data.json?t='+Date.now());
-      if(dResp.ok){
-        var newData=await dResp.json();
-        var newSig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
-        if(newSig!==localStorage.getItem('_lastDataSig')){
-          localStorage.setItem('_lastDataSig',newSig);
-          renderAll(newData);
-          toast('数据已更新','success');
-        }else{
-          toast('触发失败: '+e.message+' - 数据无变化','error');
-        }
-      }else{
-        toast('刷新失败: '+e.message,'error');
-      }
-    }catch(e2){toast('刷新失败: '+e.message,'error')}
-    btn.classList.remove('loading');
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>刷新数据';
-  }
-}
-
-// Auto-poll for updates every 30 seconds
-setInterval(async function(){
-  try{
-    var resp=await fetch('data.json?t='+Date.now());
-    if(!resp.ok)return;
-    var newData=await resp.json();
-    var sig=JSON.stringify(newData.weeks||[])+'|'+JSON.stringify(newData.monthly||{});
-    if(sig!==localStorage.getItem('_lastDataSig')){
-      localStorage.setItem('_lastDataSig',sig);
-      renderAll(newData);
-    }
-  }catch(e){}
-},30000);
-
-var s2=document.createElement('style');
-s2.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
-document.head.appendChild(s2);
+renderAll();
 </script>
-<script>
-// ─── Download Long Image ───
-function downloadImage(){
-  var btn=document.getElementById('btnDownload');
-  btn.textContent='正在生成...';
-  btn.disabled=true;
-  btn.style.opacity='0.6';
-  var el=document.querySelector('.ctn');
-  html2canvas(el,{scale:2,backgroundColor:'#f5f7fa',useCORS:true,logging:false}).then(function(canvas){
-    var link=document.createElement('a');
-    link.download='1099薪资勘误看板_'+new Date().toISOString().slice(0,10)+'.png';
-    link.href=canvas.toDataURL('image/png');
-    link.click();
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载长图';
-    btn.disabled=false;
-    btn.style.opacity='1';
-  }).catch(function(){
-    alert('下载失败，请重试');
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>下载长图';
-    btn.disabled=false;
-    btn.style.opacity='1';
-  });
-}
-</script>
-
-<script>
-var DATA=null,weeks4,totalBP,aff,totalR,affected;
-var weekC=["#00d4ff","#10b981","#f59e0b","#ff6020"];
-
-var fmt=function(n){return Number(n).toLocaleString("zh-CN",{minimumFractionDigits:0,maximumFractionDigits:2})};
-var fp=function(n){return n.toFixed(2)+"%"};
-
-function svg(tag,attrs,inner){var a="";for(var k in attrs)a+=" "+k+'="'+attrs[k]+'"';if(inner)return "<"+tag+a+">"+inner+"</"+tag+">";return "<"+tag+a+"/>"}
-
-async function initDashboard(){
-  try{
-    var resp=await fetch("data.json?t="+Date.now());
-    if(!resp.ok)throw new Error("HTTP "+resp.status);
-    var newData=await resp.json();
-    localStorage.setItem("_lastDataSig",JSON.stringify(newData.weeks||[])+"|"+JSON.stringify(newData.monthly||{}));
-    renderAll(newData);
-  }catch(e){console.error("Failed to load data.json:",e)}
-}
-initDashboard();
-
-function renderAll(DATA){
-if(!DATA||!DATA.weeks){console.warn("No data");return}
-
-weeks4=DATA.weeks.slice(-4);
-totalBP=0;aff={};totalR=0;
-weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){totalBP+=e[1].backpay_hours;if(e[1].backpay_hours>0)aff[e[0]]=true;e[1].reasons.forEach(function(rs){totalR+=rs.count})})});
-affected=Object.keys(aff);
-
-// Dynamic date range from DATA (exclude months with 0 records or empty)
-var allMonths=Object.keys(DATA.monthly||{}).filter(function(m){return Object.keys(DATA.monthly[m]||{}).length>0}).sort();
-var hdEl=document.getElementById('hdDateRange');
-if(hdEl&&allMonths.length){hdEl.textContent='● '+allMonths[0]+'–'+allMonths[allMonths.length-1]+'数据'}
-
-document.getElementById("kpiRow").innerHTML='<div class="card kpi k1"><div class="kpi-g"></div><div class="kpi-l">累计补发工时</div><div class="kpi-v">'+fmt(totalBP)+'<span class="kpi-u">h</span></div><div class="kpi-s">近4周合计 · '+weeks4.length+' 周期</div></div><div class="card kpi k2"><div class="kpi-g"></div><div class="kpi-l">涉及区域</div><div class="kpi-v">'+affected.length+'<span class="kpi-u">个</span></div><div class="kpi-s">'+affected.join(' · ')+'</div></div><div class="card kpi k3"><div class="kpi-g"></div><div class="kpi-l">勘误总笔数</div><div class="kpi-v">'+totalR+'<span class="kpi-u">笔</span></div><div class="kpi-s">近4周合计 · 含所有原因类别</div></div>';;
-
-// ═══ 1. Weekly Bar - rotated labels + data labels ═══
-(function(){
-  var bpR=[];weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){if(e[1].backpay_hours>0&&bpR.indexOf(e[0])<0)bpR.push(e[0])})});
-  var maxV=0;weeks4.forEach(function(w){Object.values(w.regions).forEach(function(d){if(d.backpay_hours>maxV)maxV=d.backpay_hours})});
-  maxV=Math.ceil(maxV/20)*20+20;
-  var nR=bpR.length, nW=weeks4.length;
-  var W=Math.max(800, nR*130+100), H=480, T=40, B=110, L=72, R=30;
-  var cw=W-L-R, ch=H-T-B, gap=cw/nR;
-  var barTotal=Math.min(gap*0.7, nW*24+8), barW=(barTotal-4)/(nW||1);
-  var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  // Grid
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
-  // Bars
-  bpR.forEach(function(r,ri){
-    weeks4.forEach(function(w,wi){
-      var v=(w.regions[r]||{}).backpay_hours||0;
-      var bh=Math.max(v/maxV*ch, v>0?2:0);
-      var bx=L+ri*gap+gap*0.15+wi*(barW+1);
-      var by=T+ch-bh;
-      h+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" rx="4" fill="'+weekC[wi]+'"><title>'+r+' / '+w.label+'·'+w.month+': '+fmt(v)+' h</title></rect>';
-      if(v>0) h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
-    });
-    // Rotated full label + short below
-    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#6b7280" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
-  });
-  // Legend
-  var lx=L; weeks4.forEach(function(w,wi){h+='<rect x="'+lx+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+weekC[wi]+'"/>';h+='<text x="'+(lx+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';lx+=100});
-  h+='</svg>';
-  document.getElementById('chartWeekly').innerHTML=h;
-})();
-
-// ═══ 2. Reason Distribution ═══
-(function(){
-  var rm={};weeks4.forEach(function(w){Object.values(w.regions).forEach(function(d){d.reasons.forEach(function(rs){rm[rs.reason]=(rm[rs.reason]||0)+rs.count})})});
-  var keys=Object.keys(rm), rc=['#00d4ff','#a855f7','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
-  var maxR=Math.max.apply(null,keys.map(function(k){return rm[k]}));
-  var W=680, H=Math.max(220,keys.length*56+30), L=160, R=100, T=10, B=10;
-  var cw=W-L-R;
-  var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  keys.forEach(function(k,i){
-    var y=T+i*52, bw=rm[k]/maxR*cw;
-    h+='<text x="'+(L-8)+'" y="'+(y+22)+'" text-anchor="end" font-size="14" fill="#111827" font-weight="600" font-family="Inter,sans-serif">'+k+'</text>';
-    h+='<rect x="'+L+'" y="'+(y+8)+'" width="'+bw+'" height="26" rx="7" fill="'+rc[i%rc.length]+'"/>';
-    h+='<text x="'+(L+bw+10)+'" y="'+(y+25)+'" font-size="14" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+rm[k]+' 笔 ('+(rm[k]/totalR*100).toFixed(1)+'%)</text>';
-  });
-  h+='</svg>';document.getElementById('chartReason').innerHTML=h;
-})();
-
-// ═══ 3. Trend Line ═══
-(function(){
-  var totals=weeks4.map(function(w){return Object.values(w.regions).reduce(function(s,d){return s+d.backpay_hours},0)});
-  var maxT=Math.ceil(Math.max.apply(null,totals)/50)*50+50;
-  var W=680, H=340, L=70, R=30, T=30, B=50, cw=W-L-R, ch=H-T-B;
-  var pts=totals.map(function(v,i){return{x:L+(i/(totals.length-1))*cw,y:T+ch*(1-v/maxT)}});
-  var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxT*i/4)+'</text>'}
-  var d='M'+pts[0].x+','+(T+ch)+' L';pts.forEach(function(p){d+=p.x+','+p.y+' '});d+=pts[pts.length-1].x+','+(T+ch)+' Z';
-  h+='<path d="'+d+'" fill="rgba(16,185,129,0.15)"/>';
-  var ld='M';pts.forEach(function(p,i){ld+=(i===0?'':'L')+p.x+','+p.y});
-  h+='<path d="'+ld+'" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>';
-  pts.forEach(function(p){h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="#10b981" stroke="#fff" stroke-width="2"/>'});
-  weeks4.forEach(function(w,i){h+='<text x="'+pts[i].x+'" y="'+(H-12)+'" text-anchor="middle" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+w.label+'·'+w.month+'</text>';h+='<text x="'+pts[i].x+'" y="'+(pts[i].y-12)+'" text-anchor="middle" font-size="13" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(totals[i])+'h</text>'});
-  h+='</svg>';document.getElementById('chartTrend').innerHTML=h;
-})();
-
-// ═══ 4. Error Ratio Horizontal ═══
-(function(){
-  var am={};weeks4.forEach(function(w){Object.entries(w.regions).forEach(function(e){if(!am[e[0]])am[e[0]]={t:0,c:0};am[e[0]].t+=e[1].error_ratio;am[e[0]].c++})});
-  var entries=Object.entries(am).map(function(e){return{r:e[0],avg:e[1].t/e[1].c}}).filter(function(e){return e.avg>0}).sort(function(a,b){return b.avg-a.avg});
-  var rc=['#00d4ff','#a855f7','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
-  var maxA=Math.max.apply(null,entries.map(function(e){return e.avg}));
-  var W=680, H=Math.max(220,entries.length*54+30), L=90, R=60, T=5, B=10, cw=W-L-R;
-  var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  entries.forEach(function(e,i){
-    var y=T+i*52, bw=e.avg/maxA*cw;
-    h+='<text x="'+(L-8)+'" y="'+(y+18)+'" text-anchor="end" font-size="13" fill="#111827" font-weight="600" font-family="Inter,sans-serif">'+e.r+'</text>';
-    h+='<rect x="'+L+'" y="'+(y+6)+'" width="'+bw+'" height="22" rx="6" fill="'+rc[i%rc.length]+'"/>';
-    h+='<text x="'+(L+bw+8)+'" y="'+(y+21)+'" font-size="13" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+e.avg.toFixed(2)+'%</text>';
-  });
-  h+='</svg>';document.getElementById('chartRatio').innerHTML=h;
-})();
-
-// ═══ 5. Week Chips ═══
-(function(){var wcC=['w1','w2','w3','w4'],h='';weeks4.forEach(function(w,i){var bpR=Object.entries(w.regions).filter(function(e){return e[1].backpay_hours>0});h+='<div class="card wc"><div class="wc-label '+wcC[i]+'">'+w.label+'</div><div class="wc-date">'+w.date_range+'</div>';if(bpR.length===0)h+='<div class="wc-em">✨ 无补发</div>';else{bpR.slice(0,4).forEach(function(e){h+='<div class="wc-s"><span class="r">'+e[0]+'</span><span class="v bp">+'+fmt(e[1].backpay_hours)+'h</span></div>'});if(bpR.length>4)h+='<div class="wc-s"><span class="r" style="color:#5a5f7a">...等'+bpR.length+'个</span><span class="v" style="color:#5a5f7a">—</span></div>'}h+='</div>'});document.getElementById('weekChips').innerHTML=h})();
-
-// ═══ 6. Monthly Bar - rotated labels + data labels ═══
-(function(){
-  var months=Object.keys(DATA.monthly), allR=[];
-  months.forEach(function(m){Object.keys(DATA.monthly[m]).forEach(function(r){if(allR.indexOf(r)<0&&DATA.monthly[m][r].backpay_hours>0)allR.push(r)})});
-  var monthColors=['#a855f7','#00d4ff','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
-  var mC={};months.forEach(function(m,i){mC[m]=monthColors[i%monthColors.length]});
-  var maxV=0;months.forEach(function(m){allR.forEach(function(r){var v=(DATA.monthly[m][r]||{}).backpay_hours||0;if(v>maxV)maxV=v})});
-  maxV=Math.ceil(maxV/50)*50+50;
-  var nR=allR.length, W=Math.max(680,nR*100+80), H=420, T=40, B=110, L=72, R=30;
-  var cw=W-L-R, ch=H-T-B, gap=cw/nR;
-  var barW=(gap*0.6-4)/2;
-  var h='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block">';
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#e5e7eb"/>';h+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#9ca3af" font-family="Inter,sans-serif">'+fmt(maxV*i/4)+'</text>'}
-  allR.forEach(function(r,ri){
-    months.forEach(function(m,mi){
-      var v=(DATA.monthly[m][r]||{}).backpay_hours||0;
-      var bh=Math.max(v/maxV*ch, v>0?2:0);
-      var bx=L+ri*gap+gap*0.2+mi*(barW+2);
-      var by=T+ch-bh;
-      h+='<rect x="'+bx+'" y="'+by+'" width="'+barW+'" height="'+bh+'" rx="4" fill="'+mC[m]+'"><title>'+r+' / '+m+': '+fmt(v)+' h</title></rect>';
-      if(v>0)h+='<text x="'+(bx+barW/2)+'" y="'+(by-5)+'" text-anchor="middle" font-size="10" fill="#111827" font-weight="700" font-family="Inter,sans-serif">'+fmt(v)+'</text>';
-    });
-    h+='<text x="'+(L+ri*gap+gap/2)+'" y="'+(H-30)+'" text-anchor="middle" font-size="13" fill="#6b7280" font-weight="600" font-family="Inter,sans-serif" transform="rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')">'+r+'</text>';
-  });
-  // Legend
-  months.forEach(function(m,mi){var lxx=L+mi*70;h+='<rect x="'+lxx+'" y="'+(T-22)+'" width="14" height="14" rx="4" fill="'+mC[m]+'"/><text x="'+(lxx+18)+'" y="'+(T-10)+'" font-size="12" fill="#6b7280" font-family="Inter,sans-serif">'+m+'</text>';});
-  h+='</svg>';document.getElementById('chartMonthly').innerHTML=h;
-})();
-
-// ═══ 7. Monthly Ratio ═══
-(function(){
-  var months=Object.keys(DATA.monthly), allR=[];
-  months.forEach(function(m){Object.keys(DATA.monthly[m]).forEach(function(r){if(allR.indexOf(r)<0&&DATA.monthly[m][r].error_ratio>0)allR.push(r)})});
-  var monthColors=['#a855f7','#00d4ff','#10b981','#f59e0b','#ec4899','#3b82f6','#ff6020'];
-  var mC={};months.forEach(function(m,i){mC[m]=monthColors[i%monthColors.length]});
-  var maxV=0;months.forEach(function(m){allR.forEach(function(r){var v=(DATA.monthly[m][r]||{}).error_ratio||0;if(v>maxV)maxV=v})});
-  maxV=Math.ceil(maxV/0.5)*0.5+0.5;
-  var nR=allR.length, W=Math.max(680,nR*120+80), H=400, T=35, B=100, L=70, R=30;
-  var cw=W-L-R, ch=H-T-B, gap=cw/nR;
-  var barTotal=Math.min(gap*0.65, 40), barW=barTotal/2;
-  var h='<svg width=\"100%\" viewBox=\"0 0 '+W+' '+H+'\" style=\"display:block\">';
-  // Grid
-  for(var i=0;i<=4;i++){var gy=T+ch*(1-i/4);h+='<line x1=\"'+L+'\" y1=\"'+gy+'\" x2=\"'+(W-R)+'\" y2=\"'+gy+'\" stroke=\"rgba(255,255,255,0.06)\"/>';h+='<text x=\"'+(L-8)+'\" y=\"'+(gy+4)+'\" text-anchor=\"end\" font-size=\"11\" fill=\"#5a5f7a\" font-family=\"Inter,sans-serif\">'+(maxV*i/4).toFixed(1)+'%</text>'}
-  // Group background & bars
-  allR.forEach(function(r,ri){
-    // Group background for clarity
-    h+='<rect x=\"'+(L+ri*gap+2)+'\" y=\"'+T+'\" width=\"'+(gap-4)+'\" height=\"'+(ch+2)+'\" rx=\"6\" fill=\"rgba(255,255,255,0.015)\"/>';
-    months.forEach(function(m,mi){
-      var v=(DATA.monthly[m][r]||{}).error_ratio||0;
-      var bh=Math.max(v/maxV*ch, v>0?2:0);
-      var bx=L+ri*gap+gap*0.18+mi*(barW+3);
-      var by=T+ch-bh;
-      h+='<rect x=\"'+bx+'\" y=\"'+by+'\" width=\"'+barW+'\" height=\"'+bh+'\" rx=\"5\" fill=\"'+mC[m]+'\"><title>'+r+' / '+m+': '+v.toFixed(2)+'%</title></rect>';
-      if(v>0)h+='<text x=\"'+(bx+barW/2)+'\" y=\"'+(by-5)+'\" text-anchor=\"middle\" font-size=\"11\" fill=\"#111827\" font-weight=\"700\" font-family=\"Inter,sans-serif\">'+v.toFixed(1)+'%</text>';
-    });
-    // Region label
-    h+='<text x=\"'+(L+ri*gap+gap/2)+'\" y=\"'+(H-30)+'\" text-anchor=\"middle\" font-size=\"13\" fill=\"#a0a4c0\" font-weight=\"600\" font-family=\"Inter,sans-serif\" transform=\"rotate(-30,'+(L+ri*gap+gap/2)+','+(H-30)+')\">'+r+'</text>';
-  });
-  // Legend
-  months.forEach(function(m,mi){var lxx=L+mi*70;h+='<rect x=\"'+lxx+'\" y=\"'+(T-22)+'\" width=\"14\" height=\"14\" rx=\"4\" fill=\"'+mC[m]+'\"/><text x=\"'+(lxx+18)+'\" y=\"'+(T-10)+'\" font-size=\"12\" fill=\"#8b8fa8\" font-family=\"Inter,sans-serif\">'+m+'</text>';});
-  h+='</svg>';document.getElementById('chartMonthlyRatio').innerHTML=h;
-})();
-
-} // end renderAll
-</script></script>
 </body>
 </html>

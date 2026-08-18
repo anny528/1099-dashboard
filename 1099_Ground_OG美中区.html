@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>1099司机薪酬看板 | 2026年1月-5月</title>
+<title>1099司机薪酬看板 | 2026年1月-7月</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
@@ -50,14 +50,12 @@ tr:hover td { background:#f7f8fa; }
   .chart-grid { grid-template-columns:1fr; }
 }
 </style>
-  <script src="config.js"></script>
-<script src="auth-guard.js"></script>
 </head>
 <body>
 
 <div class="header">
   <h1>Ground项目部 - OG 美中区 - 1099司机薪酬看板</h1>
-  <p>2026年1月 - 5月 | 按人数统计（已去重） | 金额单位：万元</p>
+  <p>2026年1月 - 7月 | 按人数统计（已去重） | 金额单位：万元</p>
 </div>
 
 <!-- KPI Cards -->
@@ -89,7 +87,7 @@ tr:hover td { background:#f7f8fa; }
   </div>
 </div>
 
-<!-- 5月总数据 & 环比差异率 -->
+<!-- 7月总数据 & 环比差异率 -->
 <div class="kpi-row" id="aprKpiRow" style="margin-bottom:20px;"></div>
 
 <!-- 1. 月度成本、工时与人数趋势 -->
@@ -104,21 +102,21 @@ tr:hover td { background:#f7f8fa; }
   <canvas id="chartGrouped" style="max-height:380px;"></canvas>
 </div>
 
-<!-- 3. 各区月度人数趋势 + 5月各区人均 -->
+<!-- 3. 各区月度人数趋势 + 7月各区人均 -->
 <div class="chart-grid" style="margin-bottom:20px;">
   <div class="chart-card" id="sectionRegionPersons">
     <h3>各区月度人数趋势</h3>
     <canvas id="chartRegionPersons" style="max-height:260px;"></canvas>
   </div>
   <div class="chart-card" id="sectionAprilPC">
-    <h3>5月各区人均月成本 & 人均月工时</h3>
+    <h3>7月各区人均月成本 & 人均月工时</h3>
     <canvas id="chartAprilPerCapita" style="max-height:260px;"></canvas>
   </div>
 </div>
 
 <!-- 4. 各区成本与人数占比 -->
 <div class="chart-card" id="sectionPie" style="margin-bottom:20px; text-align:center;">
-  <h3>各区成本与人数占比（1-5月累计）</h3>
+  <h3>各区成本与人数占比（1-7月累计）</h3>
   <canvas id="chartPie" style="max-height:550px;"></canvas>
 </div>
 
@@ -139,7 +137,7 @@ tr:hover td { background:#f7f8fa; }
 <div class="footer">数据更新时间：2026-06-05 | 1099司机实发人力成本 | 按人数去重统计</div>
 
 <script>
-const DATA = {"total":{"unique_persons":4,"person_months":12,"cost_local":358086.0,"cost_orig":51562.25,"hours":2062.49,"avg_cost_per_person":29840.5,"avg_hours_per_person":171.87},"months":["2026-01","2026-02","2026-03","2026-04","2026-05"],"months_short":["1月","2月","3月","4月","5月"],"monthly":{"person_count":[2,2,2,3,3],"hours":[484.88,399.8,472.08,321.37,384.36],"cost":[85203.11,69643.16,81702.89,55592.19,65944.65],"avg_cost_per_person":[42601.56,34821.58,40851.44,18530.73,21981.55],"avg_hours_per_person":[242.44,199.9,236.04,107.12,128.12]},"regions":["OG 美中区"],"region_stats":{"person_count":[12],"hours":[2062.49],"cost":[358086.0],"avg_cost_per_person":[29840.5],"avg_hours_per_person":[171.87]},"monthly_region_cost":[{"month":"2026-01","OG 美中区":85203.11},{"month":"2026-02","OG 美中区":69643.16},{"month":"2026-03","OG 美中区":81702.89},{"month":"2026-04","OG 美中区":55592.19},{"month":"2026-05","OG 美中区":65944.65}],"monthly_region_persons":[{"month":"2026-01","OG 美中区":2},{"month":"2026-02","OG 美中区":2},{"month":"2026-03","OG 美中区":2},{"month":"2026-04","OG 美中区":3},{"month":"2026-05","OG 美中区":3}],"detail_rows":[{"month":"2026-01","region":"OG 美中区","person_count":2,"hours":484.88,"avg_hours":242.44,"cost":85203.11,"avg_cost":42601.56,"orig_cost":12122.0},{"month":"2026-02","region":"OG 美中区","person_count":2,"hours":399.8,"avg_hours":199.9,"cost":69643.16,"avg_cost":34821.58,"orig_cost":9995.0},{"month":"2026-03","region":"OG 美中区","person_count":2,"hours":472.08,"avg_hours":236.04,"cost":81702.89,"avg_cost":40851.44,"orig_cost":11802.0},{"month":"2026-04","region":"OG 美中区","person_count":3,"hours":321.37,"avg_hours":107.12,"cost":55592.19,"avg_cost":18530.73,"orig_cost":8034.25},{"month":"2026-05","region":"OG 美中区","person_count":3,"hours":384.36,"avg_hours":128.12,"cost":65944.65,"avg_cost":21981.55,"orig_cost":9609.0}]};
+const DATA = {"total":{"unique_persons":5,"person_months":17,"cost_local":555505.17,"cost_orig":80534.5,"hours":3221.38,"avg_cost_per_person":32676.77,"avg_hours_per_person":189.49},"months":["2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"],"months_short":["1月","2月","3月","4月","5月","6月","7月"],"monthly":{"person_count":[2,2,2,3,3,2,3],"hours":[484.88,399.8,472.08,321.37,384.36,549.68,609.21],"cost":[85203.11,69643.16,81702.89,55592.19,65944.65,93687.46,103731.71],"avg_cost_per_person":[42601.56,34821.58,40851.44,18530.73,21981.55,46843.73,34577.24],"avg_hours_per_person":[242.44,199.9,236.04,107.12,128.12,274.84,203.07]},"regions":["OG 美中区"],"region_stats":{"person_count":[17],"hours":[3221.38],"cost":[555505.17],"avg_cost_per_person":[32676.77],"avg_hours_per_person":[189.49]},"monthly_region_cost":[{"month":"2026-01","OG 美中区":85203.11},{"month":"2026-02","OG 美中区":69643.16},{"month":"2026-03","OG 美中区":81702.89},{"month":"2026-04","OG 美中区":55592.19},{"month":"2026-05","OG 美中区":65944.65},{"month":"2026-06","OG 美中区":93687.46},{"month":"2026-07","OG 美中区":103731.71}],"monthly_region_persons":[{"month":"2026-01","OG 美中区":2},{"month":"2026-02","OG 美中区":2},{"month":"2026-03","OG 美中区":2},{"month":"2026-04","OG 美中区":3},{"month":"2026-05","OG 美中区":3},{"month":"2026-06","OG 美中区":2},{"month":"2026-07","OG 美中区":3}],"detail_rows":[{"month":"2026-01","region":"OG 美中区","person_count":2,"hours":484.88,"avg_hours":242.44,"cost":85203.11,"avg_cost":42601.56,"orig_cost":12122.0},{"month":"2026-02","region":"OG 美中区","person_count":2,"hours":399.8,"avg_hours":199.9,"cost":69643.16,"avg_cost":34821.58,"orig_cost":9995.0},{"month":"2026-03","region":"OG 美中区","person_count":2,"hours":472.08,"avg_hours":236.04,"cost":81702.89,"avg_cost":40851.44,"orig_cost":11802.0},{"month":"2026-04","region":"OG 美中区","person_count":3,"hours":321.37,"avg_hours":107.12,"cost":55592.19,"avg_cost":18530.73,"orig_cost":8034.25},{"month":"2026-05","region":"OG 美中区","person_count":3,"hours":384.36,"avg_hours":128.12,"cost":65944.65,"avg_cost":21981.55,"orig_cost":9609.0},{"month":"2026-06","region":"OG 美中区","person_count":2,"hours":549.68,"avg_hours":274.84,"cost":93687.46,"avg_cost":46843.73,"orig_cost":13742.0},{"month":"2026-07","region":"OG 美中区","person_count":3,"hours":609.21,"avg_hours":203.07,"cost":103731.71,"avg_cost":34577.24,"orig_cost":15230.25}]};
 
 const REGION_COLORS = {
   'MS 中南大区': '#8b5cf6', 'TX 德州大区': '#10b981',
@@ -202,11 +200,11 @@ function renderAll() {
   const aprP=mPersons[ai],marP=mPersons[mi],aprC=mCost[ai],marC=mCost[mi],aprH=mHours[ai],marH=mHours[mi];
   const aprAC=mAvgCost[ai],marAC=mAvgCost[mi],aprAH=mAvgHours[ai],marAH=mAvgHours[mi];
   document.getElementById('aprKpiRow').innerHTML = `
-    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">5月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">5月人力成本</div><div class="value" style="font-size:22px;">${FMTU(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">5月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">5月人均月成本</div><div class="value" style="font-size:22px;">$${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
-    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">5月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
+    <div class="kpi-card" style="border-left:4px solid #2563eb;"><div class="label">7月人数</div><div class="value" style="font-size:22px;">${aprP}</div><div class="sub" style="color:${momC(mom(aprP,marP))};font-weight:600;">环比 ${momS(mom(aprP,marP))}${mom(aprP,marP)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #dc2626;"><div class="label">7月人力成本</div><div class="value" style="font-size:22px;">${FMTU(aprC)}</div><div class="sub" style="color:${momC(mom(aprC,marC))};font-weight:600;">环比 ${momS(mom(aprC,marC))}${mom(aprC,marC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #f59e0b;"><div class="label">7月总工时</div><div class="value" style="font-size:22px;">${FMTN(Math.round(aprH))}h</div><div class="sub" style="color:${momC(mom(aprH,marH))};font-weight:600;">环比 ${momS(mom(aprH,marH))}${mom(aprH,marH)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #7c3aed;"><div class="label">7月人均月成本</div><div class="value" style="font-size:22px;">$${W2(aprAC)}万</div><div class="sub" style="color:${momC(mom(aprAC,marAC))};font-weight:600;">环比 ${momS(mom(aprAC,marAC))}${mom(aprAC,marAC)}%</div></div>
+    <div class="kpi-card" style="border-left:4px solid #06b6d4;"><div class="label">7月人均月工时</div><div class="value" style="font-size:22px;">${aprAH.toFixed(1)}h</div><div class="sub" style="color:${momC(mom(aprAH,marAH))};font-weight:600;">环比 ${momS(mom(aprAH,marAH))}${mom(aprAH,marAH)}%</div></div>`;
 
   Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif";
   Chart.defaults.font.size = 12;
