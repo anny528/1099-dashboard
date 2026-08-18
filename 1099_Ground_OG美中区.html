@@ -6,6 +6,7 @@
 <title>1099司机薪酬看板 | 2026年1月-7月</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background:#f0f2f5; color:#1a1a2e; padding:24px; }
@@ -45,6 +46,17 @@ tr:hover td { background:#f7f8fa; }
 
 .footer { text-align:center; padding:16px; color:#999; font-size:12px; }
 
+.download-btn {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  padding: 12px 22px; background: #2563eb; color: #fff;
+  border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(37,99,235,.35);
+  transition: all .2s; letter-spacing: 1px;
+}
+.download-btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,.45); }
+.download-btn:active { transform: translateY(0); }
+.download-btn:disabled { background: #93c5fd; cursor: not-allowed; transform: none; box-shadow: none; }
+
 @media (max-width:900px) {
   .kpi-row { grid-template-columns:repeat(3,1fr); }
   .chart-grid { grid-template-columns:1fr; }
@@ -52,6 +64,8 @@ tr:hover td { background:#f7f8fa; }
 </style>
 </head>
 <body>
+
+<button id="downloadBtn" class="download-btn" onclick="downloadLongImage()">📥 下载长图</button>
 
 <div class="header">
   <h1>Ground项目部 - OG 美中区 - 1099司机薪酬看板</h1>
@@ -308,6 +322,46 @@ function renderAll() {
     const tr = document.createElement('tr');
     tr.innerHTML = '<td>'+r.month+'</td><td>'+r.region+'</td><td class="num">'+FMTN(r.person_count)+'</td><td class="num">'+FMTN(r.hours)+'</td><td class="num">'+r.avg_hours.toFixed(1)+'h</td><td class="num">'+FMTU(r.orig_cost)+'</td><td class="num highlight">'+FMTU(r.orig_cost)+'</td><td class="num">'+FMTU(r.avg_cost)+'</td>';
     tbody.appendChild(tr);
+  });
+}
+
+// ===== 下载长图 =====
+function downloadLongImage() {
+  const btn = document.getElementById('downloadBtn');
+  if (!btn || btn.disabled) return;
+  const prevText = btn.textContent;
+  btn.textContent = '生成中…';
+  btn.disabled = true;
+  btn.style.display = 'none';
+  const fullHeight = Math.max(
+    document.body.scrollHeight, document.body.offsetHeight,
+    document.documentElement.scrollHeight, document.documentElement.offsetHeight
+  );
+  const fullWidth = Math.max(
+    document.body.scrollWidth, document.body.offsetWidth,
+    document.documentElement.scrollWidth, document.documentElement.offsetWidth
+  );
+  html2canvas(document.body, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#f0f2f5',
+    width: fullWidth,
+    height: fullHeight,
+    windowWidth: fullWidth,
+    windowHeight: fullHeight,
+    scrollX: 0,
+    scrollY: 0,
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = (document.title || '1099看板').replace(/[\\/:*?"<>|]/g, '_') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(err => {
+    alert('长图生成失败：' + (err && err.message ? err.message : err));
+  }).finally(() => {
+    btn.style.display = '';
+    btn.textContent = prevText;
+    btn.disabled = false;
   });
 }
 
