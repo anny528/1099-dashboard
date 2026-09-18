@@ -98,14 +98,12 @@ jobs:
 
           weeks = []
           regions_set = set()
-          period_by_month = {}
           for dr in sorted_drs:
               wk_rows = week_groups[dr]
               mo = next(((r[1] or '').strip() for r in wk_rows if (r[1] or '').strip()), '')
-              # 按月份自动生成连续周标签（忽略表格手填的「周期」列，避免重复）
-              n = period_by_month.get(mo, 0) + 1
-              period = f'W{n}'
-              period_by_month[mo] = n
+              # 使用表格手填的「周期」列标注值（W1-W4 按用户标注）
+              wk_periods = set((r[0] or '').strip() for r in wk_rows if (r[0] or '').strip())
+              period = sorted(wk_periods)[0] if wk_periods else ''
               regs = {}
               for r in wk_rows:
                   rg = (r[4] or '').strip()
@@ -118,7 +116,20 @@ jobs:
                   if pv(r[15]) > 0: reasons.append({'reason':'考勤专员数据差异','count':int(pv(r[15])),'backpay_hours':pv(r[14])})
                   ratio = float((r[12] or '0%').strip().replace('%',''))
                   bp = pv(r[5]) or sum(rs['backpay_hours'] for rs in reasons)
-                  regs[rg] = {'actual_hours':pv(r[6]),'due_hours':pv(r[7]),'backpay_hours':bp,'error_ratio':ratio,'reasons':reasons}
+                  if rg in regs:
+                      # 同区域合并累加（避免后一条覆盖前一条导致数据丢失）
+                      regs[rg]['actual_hours'] += pv(r[6])
+                      regs[rg]['due_hours'] += pv(r[7])
+                      regs[rg]['backpay_hours'] += bp
+                      for rs in reasons:
+                          hit = next((x for x in regs[rg]['reasons'] if x['reason']==rs['reason']), None)
+                          if hit:
+                              hit['count'] += rs['count']
+                              hit['backpay_hours'] += rs['backpay_hours']
+                          else:
+                              regs[rg]['reasons'].append(rs)
+                  else:
+                      regs[rg] = {'actual_hours':pv(r[6]),'due_hours':pv(r[7]),'backpay_hours':bp,'error_ratio':ratio,'reasons':reasons}
               weeks.append({'label':period,'month':mo,'date_range':dr,'regions':regs})
 
           monthly = {}
