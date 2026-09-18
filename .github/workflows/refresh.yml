@@ -21,8 +21,6 @@ jobs:
           RESP=$(curl -s -X POST 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal' \
             -H 'Content-Type: application/json; charset=utf-8' \
             -d '{"app_id":"${{ secrets.LARK_APP_ID }}","app_secret":"${{ secrets.LARK_APP_SECRET }}"}')
-          CODE=$(echo "$RESP" | python3 -c "import sys,json;print(json.load(sys.stdin).get('code','?'))")
-          echo "Auth code: $CODE"
           TOKEN=$(echo "$RESP" | python3 -c "import sys,json;print(json.load(sys.stdin)['tenant_access_token'])")
           echo "::add-mask::$TOKEN"
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
@@ -50,7 +48,6 @@ jobs:
                   print(f"API error: code={resp.get('code')}, msg={resp.get('msg')}")
                   break
               items = resp["data"]["items"]
-              print(f"  page: {len(items)} records (total so far: {len(all_items)+len(items)})")
               all_items.extend(items)
               if not resp["data"].get("has_more"):
                   break
@@ -73,31 +70,42 @@ jobs:
               '考勤专员数据差异 (1)','考勤专员数据差异'
           ]
           rows = [[r['fields'].get(k) for k in FIELD_ORDER] for r in all_items]
-          # Skip 6月 (historical data; dashboard focuses on 7月+)
-          rows = [r for r in rows if (r[1] or '').strip() != '6月']
 
-          wk_keys = []
+          def month_num(mo):
+              m = re.match(r'^(\d+)月', (mo or '').strip())
+              return int(m.group(1)) if m else 0
+
+          # 滚动窗口：只保留最近 2 个月（当前月 + 上月），自动丢弃更早的旧数据
+          months_present = sorted(set(month_num(r[1]) for r in rows if month_num(r[1]) > 0))
+          keep_from = 0
+          if months_present:
+              keep_from = months_present[-1] - 1
+          rows = [r for r in rows if month_num(r[1]) >= keep_from]
+          print(f"After month filter: {len(rows)} records (keep month_num >= {keep_from})")
+
+          # 以「时间区间」为唯一周键分组
+          week_groups = {}
           for r in rows:
               dr = (r[11] or '').strip()
-              mo = (r[1] or '').strip()
-              key = (dr, mo)
-              if dr and key not in wk_keys: wk_keys.append(key)
+              if not dr: continue
+              week_groups.setdefault(dr, []).append(r)
+
+          def start_date(dr):
+              m = re.search(r'(\d{4}\.\d{2}\.\d{2})', dr)
+              return m.group(1) if m else dr
+
+          sorted_drs = sorted(week_groups.keys(), key=start_date)
 
           weeks = []
-          period_by_month = {}  # track auto-generated labels per month
           regions_set = set()
-          for (wk, mo) in wk_keys:
-              wk_rows = [r for r in rows if (r[11] or '').strip() == wk and (r[1] or '').strip() == mo]
-              # Period: use existing label, else auto-generate per-month sequence
-              wk_periods = set((r[0] or '').strip() for r in wk_rows if (r[0] or '').strip())
-              if wk_periods:
-                  period = sorted(wk_periods)[0]
-                  period_by_month[mo] = max(period_by_month.get(mo, 0), int(period[1:]) if period.startswith('W') and len(period) > 1 and period[1:].isdigit() else 1)
-              else:
-                  n = period_by_month.get(mo, 0) + 1
-                  period = f'W{n}'
-                  period_by_month[mo] = n
-              month = mo
+          period_by_month = {}
+          for dr in sorted_drs:
+              wk_rows = week_groups[dr]
+              mo = next(((r[1] or '').strip() for r in wk_rows if (r[1] or '').strip()), '')
+              # 按月份自动生成连续周标签（忽略表格手填的「周期」列，避免重复）
+              n = period_by_month.get(mo, 0) + 1
+              period = f'W{n}'
+              period_by_month[mo] = n
               regs = {}
               for r in wk_rows:
                   rg = (r[4] or '').strip()
@@ -111,7 +119,7 @@ jobs:
                   ratio = float((r[12] or '0%').strip().replace('%',''))
                   bp = pv(r[5]) or sum(rs['backpay_hours'] for rs in reasons)
                   regs[rg] = {'actual_hours':pv(r[6]),'due_hours':pv(r[7]),'backpay_hours':bp,'error_ratio':ratio,'reasons':reasons}
-              weeks.append({'label':period,'month':month,'date_range':wk,'regions':regs})
+              weeks.append({'label':period,'month':mo,'date_range':dr,'regions':regs})
 
           monthly = {}
           for w in weeks:
@@ -142,6 +150,8 @@ jobs:
           tc = sum(sum(rs['count'] for rs in d['reasons']) for w in weeks for d in w['regions'].values())
           tb = sum(d['backpay_hours'] for w in weeks for d in w['regions'].values())
           print(f'Summary: {len(rows)} records, {len(weeks)} weeks, {tc} corrections, {tb:.1f}h backpay')
+          for w in weeks:
+              print(f"  {w['label']} {w['month']} | {w['date_range']}")
           PYEOF
 
       - name: Commit and Push
